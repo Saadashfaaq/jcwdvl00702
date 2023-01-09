@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
 import {
   IconButton,
   Box,
@@ -17,94 +17,166 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-} from '@mui/material';
-import { Search, SortTwoTone, MoreHoriz, ContentPaste } from '@mui/icons-material';
-import { TabPanel, TabList, TabContext } from '@mui/lab';
-import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
+} from "@mui/material";
+import {
+  Search,
+  SortTwoTone,
+  MoreHoriz,
+  ContentPaste,
+} from "@mui/icons-material";
+import { TabPanel, TabList, TabContext } from "@mui/lab";
+import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 
-import { Link } from 'react-router-dom';
+import "../../assets/styles/OrderList.css";
+import Axios from "axios";
 
-import '../../assets/styles/OrderList.css';
+function OrderList() {
+  const { isLoggedIn, user } = useSelector((state) => ({
+    isLoggedIn: state.auth.isLoggedIn,
+    user: state.auth.user,
+  }));
+  const userUID = user?.customer_uid;
+  console.log(user);
+  const userData = user?.role;
+  console.log(userData);
 
-class OrderList extends React.Component {
-  state = {
-    isOnGoing: true,
-    isCompleted: false,
-    value: '1',
-    isOrderComplete: true,
-    isOrderOg: false,
-    status: '',
-    isSearch: false,
-    isAdmin: true,
-    setOpenC: false,
+  const [activeTab, setActiveTab] = useState();
+  const [orderDetails, setOrderDetails] = useState();
+  const [isSearch, setIsSearch] = useState(false);
+  const [openC, setOpenC] = useState(false);
+  // state = {
+  //   isOnGoing: true,
+  //   isCompleted: false,
+  //   value: '1',
+  //   isOrderComplete: true,
+  //   isOrderOg: false,
+  //   status: '',
+  //   isSearch: false,
+  //   isAdmin: true,
+  //   setOpenC: false,
+  // };
+
+  const handleChange = () => {
+    setActiveTab();
   };
 
-  handleChange = (event, value) => {
-    this.setState({ ...this.state, value });
+  useEffect(() => {
+    const getOrderList = async () => {
+      const response = await Axios.get(
+        `http://localhost:3300/api/order/get-order-cart-product`
+      );
+      console.log(response.data);
+      setOrderDetails(response.data);
+    };
+    getOrderList();
+  }, []);
+
+  const isSearchHandle = () => {
+    setIsSearch(true);
   };
 
-  isSearchHandle = () => {
-    this.setState({ ...this.state, isSearch: true });
+  const isSearchHandleClose = () => {
+    setIsSearch(false);
   };
 
-  isSearchHandleClose = () => {
-    this.setState({ ...this.state, isSearch: false });
+  const handleCloseCancel = () => {
+    setOpenC(false);
   };
 
-  handleCloseCancel = () => {
-    this.setState({ ...this.state, setOpenC: false });
+  const handleClickOpenCancel = () => {
+    setOpenC(true);
   };
 
-  handleClickOpenCancel = () => {
-    this.setState({ ...this.state, setOpenC: true });
-  };
+  // handleChange = (event, value) => {
+  //   this.setState({ ...this.state, value });
+  // };
 
-  olistcDetailStatus = (status) => {
-    if (status === '1') {
+  // isSearchHandle = () => {
+  //   this.setState({ ...this.state, isSearch: true });
+  // };
+
+  // isSearchHandleClose = () => {
+  //   this.setState({ ...this.state, isSearch: false });
+  // };
+
+  // handleCloseCancel = () => {
+  //   this.setState({ ...this.state, setOpenC: false });
+  // };
+
+  // handleClickOpenCancel = () => {
+  //   this.setState({ ...this.state, setOpenC: true });
+  // };
+
+  const olistcDetailStatus = (status) => {
+    if (status === "1") {
       return (
-        <Box className="moc-detail-status-1" sx={{ backgroundColor: 'rgb(255,165,0,0.4)' }}>
+        <Box
+          className="moc-detail-status-1"
+          sx={{ backgroundColor: "rgb(255,165,0,0.4)" }}
+        >
           Waiting for payment
         </Box>
       );
-    } else if (status === '2') {
+    } else if (status === "2") {
       return (
-        <Box className="moc-detail-status-2" sx={{ backgroundColor: 'rgb(255,215,0,0.4)' }}>
+        <Box
+          className="moc-detail-status-2"
+          sx={{ backgroundColor: "rgb(255,215,0,0.4)" }}
+        >
           Payment confirmation
         </Box>
       );
-    } else if (status === '3') {
+    } else if (status === "3") {
       return (
-        <Box className="moc-detail-status-3" sx={{ backgroundColor: 'rgb(152,251,152,0.4)' }}>
+        <Box
+          className="moc-detail-status-3"
+          sx={{ backgroundColor: "rgb(152,251,152,0.4)" }}
+        >
           In process
         </Box>
       );
-    } else if (status === '4') {
+    } else if (status === "4") {
       return (
-        <Box className="moc-detail-status-4" sx={{ backgroundColor: 'rgba(127, 255, 212, 0.4)' }}>
+        <Box
+          className="moc-detail-status-4"
+          sx={{ backgroundColor: "rgba(127, 255, 212, 0.4)" }}
+        >
           In delivery
         </Box>
       );
-    } else if (status === '5') {
+    } else if (status === "5") {
       return (
-        <Box className="moc-detail-status-5" sx={{ backgroundColor: 'rgb(72,209,204,0.4)' }}>
+        <Box
+          className="moc-detail-status-5"
+          sx={{ backgroundColor: "rgb(72,209,204,0.4)" }}
+        >
           Received
         </Box>
       );
     } else {
       return (
-        <Box className="moc-detail-status-6" sx={{ backgroundColor: 'rgb(220,20,60,0.4)' }}>
+        <Box
+          className="moc-detail-status-6"
+          sx={{ backgroundColor: "rgb(220,20,60,0.4)" }}
+        >
           Canceled
         </Box>
       );
     }
   };
 
-  menuHandler = () => {
+  const menuHandler = () => {
     return (
       <PopupState variant="popover" popupId="demo-popup-menu">
         {(popupState) => (
           <React.Fragment>
-            <button className="account-button" variant="contained" {...bindTrigger(popupState)}>
+            <button
+              className="account-button"
+              variant="contained"
+              {...bindTrigger(popupState)}
+            >
               <IconButton>
                 <MoreHoriz />
               </IconButton>
@@ -121,22 +193,34 @@ class OrderList extends React.Component {
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link to="/warehouse-management" className="userlist-banner-menu-link">
+                <Link
+                  to="/warehouse-management"
+                  className="userlist-banner-menu-link"
+                >
                   Warehouse Mng.
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link to="/products-management-list" className="userlist-banner-menu-link">
+                <Link
+                  to="/products-management-list"
+                  className="userlist-banner-menu-link"
+                >
                   Product List
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link to="/products-management-category" className="userlist-banner-menu-link">
+                <Link
+                  to="/products-management-category"
+                  className="userlist-banner-menu-link"
+                >
                   Product Category
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link to="/stock-mutation" className="userlist-banner-menu-link">
+                <Link
+                  to="/stock-mutation"
+                  className="userlist-banner-menu-link"
+                >
                   Stock Mutation
                 </Link>
               </MenuItem>
@@ -162,212 +246,301 @@ class OrderList extends React.Component {
     );
   };
 
-  orderListCard = (status) => {
+  const orderListCard = (status) => {
     return (
-      <div className="olistc-main">
-        <div className="olistc-subdetail">
-          <div className="olistc-detail-name">Order ID</div>
-          <div className="olistc-detail-subname">Order Date</div>
-          <div className="olistc-detail-subname">User ID</div>
-          <div className="olistc-detail-subname">User</div>
-          <div className="olistc-detail-subname">From</div>
-          {this.olistcDetailStatus(status)}
-        </div>
-        <div className="olistc-detail">
-          <div className="olistc-detail-name">20220112235900</div>
-          <div className="olistc-detail-subname">21-11-2022</div>
-          <div className="olistc-detail-subname">19450817110256</div>
-          <div className="olistc-detail-subname">Maria Marcelinus</div>
-          <div className="olistc-detail-subname">Warehouse A</div>
-          <div className="olistc-detail-bottom">
-            <Button
-              sx={{ borderRadius: '20px', backgroundColor: 'white', color: 'red', fontSize: '8px', fontFamily: 'Lora' }}
-              variant="contained"
-              onClick={this.handleClickOpenCancel}
-              className="olistc-detail-bottom-track">
-              Cancel
-            </Button>
-            <Dialog
-              open={this.state.setOpenC}
-              onClose={this.handleCloseCancel}
-              aria-labelledby="alert-dialog-title"
-              aria-describedby="alert-dialog-description">
-              <DialogTitle id="alert-dialog-title">{'Cancel this order'}</DialogTitle>
-              <DialogContent>
-                <DialogContentText id="alert-dialog-description">Are you sure ?</DialogContentText>
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={this.handleCloseCancel}>No</Button>
-                <Button onClick={this.handleCloseCancel} autoFocus>
-                  Yes
+      <>
+        {/* {orderDetails?.map((orderDetail) => ( */}
+        <>
+          <div className="olistc-main">
+            <div className="olistc-subdetail">
+              <div className="olistc-detail-name">Order ID</div>
+              <div className="olistc-detail-subname">Order Date</div>
+              <div className="olistc-detail-subname">User ID</div>
+              <div className="olistc-detail-subname">User</div>
+              <div className="olistc-detail-subname">From</div>
+              {olistcDetailStatus(status)}
+            </div>
+            <div className="olistc-detail">
+              {/* {orderDetail.orderitems?.map((orderitem) => ( */}
+              <>
+                <div className="olistc-detail-name">
+                  {orderDetails[0].orderitems[0].order_id}
+                </div>
+                <div className="olistc-detail-subname">
+                  {orderDetails[0].orderitems[0].updatedAt}
+                </div>
+                <div className="olistc-detail-subname">
+                  {orderDetails[0].customer_uid}
+                </div>
+                <div className="olistc-detail-subname">
+                  {orderDetails[0].fullname}
+                </div>
+                <div className="olistc-detail-subname">
+                  Warehouse {orderDetails[0].orderitems[0].warehouse_id}
+                </div>
+              </>
+              <div className="olistc-detail-bottom">
+                <Button
+                  sx={{
+                    borderRadius: "20px",
+                    backgroundColor: "white",
+                    color: "red",
+                    fontSize: "8px",
+                    fontFamily: "Lora",
+                  }}
+                  variant="contained"
+                  onClick={handleClickOpenCancel}
+                  className="olistc-detail-bottom-track"
+                >
+                  Cancel
                 </Button>
-              </DialogActions>
-            </Dialog>
-            <Link to="/order-detail-admin">
-              <Button
-                sx={{ borderRadius: '20px', backgroundColor: 'black', fontSize: '8px', fontFamily: 'Lora' }}
-                variant="contained"
-                className="olistc-detail-bottom-track">
-                Detail
-              </Button>
-            </Link>
+                <Dialog
+                  open={openC}
+                  onClose={handleCloseCancel}
+                  aria-labelledby="alert-dialog-title"
+                  aria-describedby="alert-dialog-description"
+                >
+                  <DialogTitle id="alert-dialog-title">
+                    {"Cancel this order"}
+                  </DialogTitle>
+                  <DialogContent>
+                    <DialogContentText id="alert-dialog-description">
+                      Are you sure ?
+                    </DialogContentText>
+                  </DialogContent>
+                  <DialogActions>
+                    <Button onClick={handleCloseCancel}>No</Button>
+                    <Button onClick={handleCloseCancel} autoFocus>
+                      Yes
+                    </Button>
+                  </DialogActions>
+                </Dialog>
+                <Link
+                  to={{
+                    pathname: `/order-detail-admin/${orderDetails[0].customer_uid}`,
+                    state: orderDetails[0].customer_uid,
+                  }}
+                >
+                  <Button
+                    sx={{
+                      borderRadius: "20px",
+                      backgroundColor: "black",
+                      fontSize: "8px",
+                      fontFamily: "Lora",
+                    }}
+                    variant="contained"
+                    className="olistc-detail-bottom-track"
+                  >
+                    Detail
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </>
+      </>
     );
   };
 
-  render() {
-    return (
-      <Container maxWidth="xs" sx={{ backgroundColor: 'white' }}>
-        <div className="orderlist-main">
-          <div className="orderlist-banner">
-            <div className="orderlist-banner-logo">
-              <IconButton disabled>
-                <ContentPaste />
-              </IconButton>
-            </div>
+  return (
+    <Container maxWidth="xs" sx={{ backgroundColor: "white" }}>
+      <div className="orderlist-main">
+        <div className="orderlist-banner">
+          <div className="orderlist-banner-logo">
+            <IconButton disabled>
+              <ContentPaste />
+            </IconButton>
+          </div>
 
-            {this.state.isSearch ? (
-              <>
-                <ClickAwayListener onClickAway={this.isSearchHandleClose}>
-                  <InputBase
-                    sx={{ ml: 1, flex: 1, fontFamily: 'Lora' }}
-                    placeholder="Order ID"
-                    inputProps={{ 'aria-label': 'Search' }}
-                    className="orderlist-search"
-                    endAdornment={
-                      <InputAdornment position="end">
-                        <IconButton edge="end">
-                          <Search />
-                        </IconButton>
-                      </InputAdornment>
-                    }
-                  />
-                </ClickAwayListener>
-              </>
-            ) : (
-              <>
-                <div className="orderlist-banner-text">Order List</div>
-                <div className="orderlist-banner-search">
-                  <IconButton onClick={this.isSearchHandle}>
-                    <Search />
-                  </IconButton>
-                </div>
-              </>
-            )}
-
-            <div className="orderlist-banner-sort">
-              <PopupState variant="popover" popupId="demo-popup-menu">
-                {(popupState) => (
-                  <React.Fragment>
-                    <button className="account-button" variant="contained" {...bindTrigger(popupState)}>
-                      <IconButton>
-                        <SortTwoTone />
+          {isSearch ? (
+            <>
+              <ClickAwayListener onClickAway={isSearchHandleClose}>
+                <InputBase
+                  sx={{ ml: 1, flex: 1, fontFamily: "Lora" }}
+                  placeholder="Order ID"
+                  inputProps={{ "aria-label": "Search" }}
+                  className="orderlist-search"
+                  endAdornment={
+                    <InputAdornment position="end">
+                      <IconButton edge="end">
+                        <Search />
                       </IconButton>
-                    </button>
-                    <Menu {...bindMenu(popupState)}>
-                      <MenuItem onClick={popupState.close} sx={{ fontFamily: 'Lora' }}>
-                        <img src="https://img.icons8.com/fluency-systems-filled/22/null/sort-numeric-up.png" />
-                        Oldest
-                      </MenuItem>
-                      <MenuItem onClick={popupState.close} sx={{ fontFamily: 'Lora' }}>
-                        <img src="https://img.icons8.com/windows/24/null/sort-numeric-up-reversed.png" />
-                        Recent
-                      </MenuItem>
-                      {this.state.isAdmin ? (
-                        <>
-                          <MenuItem>
-                            <img src="https://img.icons8.com/ios/24/null/garage-closed.png" />
-                            Warehouse A
-                          </MenuItem>
-                          <MenuItem>
-                            <img src="https://img.icons8.com/ios/24/null/garage-closed.png" />
-                            Warehouse B
-                          </MenuItem>
-                          <MenuItem>
-                            <img src="https://img.icons8.com/ios/24/null/garage-closed.png" />
-                            Warehouse C
-                          </MenuItem>
-                        </>
-                      ) : null}
-                    </Menu>
-                  </React.Fragment>
-                )}
-              </PopupState>
-            </div>
+                    </InputAdornment>
+                  }
+                />
+              </ClickAwayListener>
+            </>
+          ) : (
+            <>
+              <div className="orderlist-banner-text">Order List</div>
+              <div className="orderlist-banner-search">
+                <IconButton onClick={isSearchHandle}>
+                  <Search />
+                </IconButton>
+              </div>
+            </>
+          )}
 
-            <div className="orderlist-banner-menu">{this.menuHandler()}</div>
+          <div className="orderlist-banner-sort">
+            <PopupState variant="popover" popupId="demo-popup-menu">
+              {(popupState) => (
+                <React.Fragment>
+                  <button
+                    className="account-button"
+                    variant="contained"
+                    {...bindTrigger(popupState)}
+                  >
+                    <IconButton>
+                      <SortTwoTone />
+                    </IconButton>
+                  </button>
+                  <Menu {...bindMenu(popupState)}>
+                    <MenuItem
+                      onClick={popupState.close}
+                      sx={{ fontFamily: "Lora" }}
+                    >
+                      <img src="https://img.icons8.com/fluency-systems-filled/22/null/sort-numeric-up.png" />
+                      Oldest
+                    </MenuItem>
+                    <MenuItem
+                      onClick={popupState.close}
+                      sx={{ fontFamily: "Lora" }}
+                    >
+                      <img src="https://img.icons8.com/windows/24/null/sort-numeric-up-reversed.png" />
+                      Recent
+                    </MenuItem>
+                    {userData === "admin" ? (
+                      <>
+                        <MenuItem>
+                          <img src="https://img.icons8.com/ios/24/null/garage-closed.png" />
+                          Warehouse A
+                        </MenuItem>
+                        <MenuItem>
+                          <img src="https://img.icons8.com/ios/24/null/garage-closed.png" />
+                          Warehouse B
+                        </MenuItem>
+                        <MenuItem>
+                          <img src="https://img.icons8.com/ios/24/null/garage-closed.png" />
+                          Warehouse C
+                        </MenuItem>
+                        {/* <MenuItem>
+                            <div>{orderDetails[0]?.status}</div>
+                          </MenuItem> */}
+                      </>
+                    ) : null}
+                  </Menu>
+                </React.Fragment>
+              )}
+            </PopupState>
           </div>
 
-          <div className="orderlist-tab">
-            <Box sx={{ width: '100%', typography: 'body1' }}>
-              <TabContext value={this.state.value}>
-                <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                  <TabList onChange={this.handleChange} aria-label="lab API tabs example">
-                    <Tab sx={{ marginLeft: '20px', fontFamily: 'Lora' }} label="On Going" value="1" />
-                    <Tab sx={{ marginLeft: '100px', fontFamily: 'Lora' }} label="Completed" value="2" />
-                  </TabList>
-                </Box>
-
-                {this.state.isOrderOg ? (
-                  <>
-                    <TabPanel value="1">
-                      {this.orderListCard('1')}
-                      {this.orderListCard('2')}
-                      {this.orderListCard('3')}
-                      {this.orderListCard('4')}
-
-                      <Stack spacing={1} sx={{ position: 'fixed', top: '78%', width: '110%', fontFamily: 'Lora' }}>
-                        <Pagination count={10} />
-                      </Stack>
-                    </TabPanel>
-                  </>
-                ) : (
-                  <TabPanel value="1">
-                    <div className="orderlist-og">
-                      <img
-                        src="https://i.pinimg.com/originals/6f/df/bc/6fdfbc41d6a8e26d4b9073bc1afd899f.jpg"
-                        className="orderlist-og-logo"
-                        alt="No Order"
-                      />
-                      <div className="orderlist-og-text-1">You don't have an order yet</div>
-                      <div className="orderlist-og-text-2">You don't have On Going orders at this time</div>
-                    </div>
-                  </TabPanel>
-                )}
-
-                {this.state.isOrderComplete ? (
-                  <>
-                    <TabPanel value="2">
-                      {this.orderListCard('5')}
-                      {this.orderListCard('6')}
-
-                      <Stack spacing={1} sx={{ position: 'fixed', top: '78%', width: '110%', fontFamily: 'Lora' }}>
-                        <Pagination count={10} />
-                      </Stack>
-                    </TabPanel>
-                  </>
-                ) : (
-                  <TabPanel value="2">
-                    <div className="orderlist-og">
-                      <img
-                        src="https://i.pinimg.com/originals/6f/df/bc/6fdfbc41d6a8e26d4b9073bc1afd899f.jpg"
-                        className="orderlist-og-logo"
-                        alt="No Order"
-                      />
-                      <div className="orderlist-og-text-1">You don't have an order yet</div>
-                      <div className="orderlist-og-text-2">You don't have Completed orders at this time</div>
-                    </div>
-                  </TabPanel>
-                )}
-              </TabContext>
-            </Box>
-          </div>
+          <div className="orderlist-banner-menu">{menuHandler()}</div>
         </div>
-      </Container>
-    );
-  }
+
+        <div className="orderlist-tab">
+          <Box sx={{ width: "100%", typography: "body1" }}>
+            <TabContext value={activeTab}>
+              <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                <TabList
+                  onChange={handleChange}
+                  aria-label="lab API tabs example"
+                >
+                  <Tab
+                    sx={{ marginLeft: "20px", fontFamily: "Lora" }}
+                    label="On Going"
+                    value="1"
+                  />
+                  <Tab
+                    sx={{ marginLeft: "100px", fontFamily: "Lora" }}
+                    label="Completed"
+                    value="2"
+                  />
+                </TabList>
+              </Box>
+              <>
+                {orderDetails?.map((orderDetail) => (
+                  <>
+                    {orderDetail.status ? (
+                      <TabPanel value="1">
+                        <div className="orderlist-og">
+                          <img
+                            src="https://i.pinimg.com/originals/6f/df/bc/6fdfbc41d6a8e26d4b9073bc1afd899f.jpg"
+                            className="orderlist-og-logo"
+                            alt="No Order"
+                          />
+                          <div className="orderlist-og-text-1">
+                            You don't have an order yet
+                          </div>
+                          <div className="orderlist-og-text-2">
+                            You don't have On Going orders at this time
+                          </div>
+                        </div>
+                      </TabPanel>
+                    ) : (
+                      <TabPanel>
+                        {orderListCard()}
+
+                        <Stack
+                          spacing={1}
+                          sx={{
+                            position: "fixed",
+                            top: "78%",
+                            width: "110%",
+                            fontFamily: "Lora",
+                          }}
+                        >
+                          <Pagination count={10} />
+                        </Stack>
+                      </TabPanel>
+                    )}
+                  </>
+                ))}
+              </>
+              <>
+                {orderDetails?.map((orderDetail) => (
+                  <>
+                    {orderDetail.status ? (
+                      <TabPanel value="2">
+                        {orderListCard()}
+
+                        <Stack
+                          spacing={1}
+                          sx={{
+                            position: "fixed",
+                            top: "78%",
+                            width: "110%",
+                            fontFamily: "Lora",
+                          }}
+                        >
+                          <Pagination count={10} />
+                        </Stack>
+                      </TabPanel>
+                    ) : (
+                      <TabPanel value="2">
+                        <div className="orderlist-og">
+                          <img
+                            src="https://i.pinimg.com/originals/6f/df/bc/6fdfbc41d6a8e26d4b9073bc1afd899f.jpg"
+                            className="orderlist-og-logo"
+                            alt="No Order"
+                          />
+                          <div className="orderlist-og-text-1">
+                            You don't have an order yet
+                          </div>
+                          <div className="orderlist-og-text-2">
+                            You don't have Completed orders at this time
+                          </div>
+                        </div>
+                      </TabPanel>
+                    )}
+                  </>
+                ))}
+              </>
+            </TabContext>
+          </Box>
+        </div>
+      </div>
+    </Container>
+  );
 }
 
 export default OrderList;

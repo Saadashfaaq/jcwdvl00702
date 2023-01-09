@@ -30,6 +30,7 @@ export default function UserList() {
   const processUsers = () => {
     Axios.get(`http://localhost:3300/api/admin/get-user`).then((res) => {
       const getRes = res.data.allUser;
+      console.log(res.data)
       console.log(getRes);
       dispatch(getUserData(getRes));
       setUserBox(getRes);

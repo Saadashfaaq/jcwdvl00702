@@ -36,6 +36,9 @@ module.exports = (sequelize, DataTypes) => {
       admin: {
         type: DataTypes.STRING
       },
+      city_id: {
+        type: DataTypes.STRING,
+      },
       is_primary: {
         allowNull: false,
         type: DataTypes.BOOLEAN,

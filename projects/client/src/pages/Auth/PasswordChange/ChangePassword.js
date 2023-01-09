@@ -1,21 +1,26 @@
 import "../../../assets/styles/passwordChange.css";
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ArrowBack, Email } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import { Container } from "@mui/material";
-import { AuthContext } from "../../../context/AuthProvider";
 import { firebaseAuthentication } from "../../../config/firebase";
 import {useHistory} from "react-router-dom"
 import {useFormik} from "formik"
 import * as Yup from "yup"
 import YupPassword from "yup-password"
 import axios from 'axios'
+import { useSelector } from "react-redux";
 
 
 export default function ChangePassword() {
-  const { user } = useContext(AuthContext);
-  console.log(user?.email,user?.providerData[0].providerId)
   let history = useHistory()
+
+  const { isLoggedIn, user } = useSelector((state) => ({
+    isLoggedIn: state.auth.isLoggedIn,
+    user: state.auth.user,
+  }));
+  const userUID = user?.customer_uid;
+  console.log(user);
 
   // Minimum eight characters, at least one letter, one number and one special character
   const passwordRules = "^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$" 
@@ -77,12 +82,14 @@ export default function ChangePassword() {
               <input
                 placeholder="Email"
                 className="reset-input"
-                onChange={(e) => formik.setFieldValue("email", e.target.value)}
+                // onChange={(e) => formik.setFieldValue("email", e.target.value)}
               />
             </div>
             <div className="changepass-button">
               <Link to="/reset-password">
-                <button className="changepass-continue" onClick={formik.handleSubmit}>
+                <button className="changepass-continue" 
+                  // onClick={formik.handleSubmit}
+                >
                   Send
                 </button>
               </Link>

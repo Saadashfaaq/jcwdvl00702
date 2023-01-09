@@ -147,6 +147,7 @@ function WarehouseManagement() {
     <>
       {userData === "admin" ? (
         <Container maxWidth="xs" sx={{ backgroundColor: "white" }}>
+          {console.log(WarehouseDetails)}
           <div className="whmanagement-main">
             <div className="whmanagement-banner">
               <div className="whmanagement-banner-logo">

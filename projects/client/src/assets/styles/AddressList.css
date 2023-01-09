@@ -74,3 +74,12 @@
     color: white;
     font-weight: bold;
 }
+
+.back-btn{
+    border: none;
+    background-color: transparent;
+}
+
+.back-btn:hover{
+    cursor: pointer;
+}

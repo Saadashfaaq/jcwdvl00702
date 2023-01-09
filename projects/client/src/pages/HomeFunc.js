@@ -12,7 +12,8 @@ import BusinessCenterOutlinedIcon from "@mui/icons-material/BusinessCenterOutlin
 import DirectionsBikeOutlinedIcon from "@mui/icons-material/DirectionsBikeOutlined";
 import HikingOutlinedIcon from "@mui/icons-material/HikingOutlined";
 import HandymanOutlinedIcon from "@mui/icons-material/HandymanOutlined";
-import { Link ,useHistory} from "react-router-dom";
+import ShoppingBagOutlinedIcon from "@mui/icons-material/ShoppingBagOutlined";
+import { Link, useHistory } from "react-router-dom";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { Slide } from "react-slideshow-image";
 import "react-slideshow-image/dist/styles.css";
@@ -23,16 +24,16 @@ import firebase from "firebase";
 import { AuthContext } from "../context/AuthProvider";
 import { useState, useEffect, useContext } from "react";
 import { firebaseAuthentication } from "../config/firebase";
-import {Login} from '@mui/icons-material'
-import {shallowEqual, useDispatch,useSelector} from 'react-redux'
+import { Login } from "@mui/icons-material";
+import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../redux/actionCreators/authActionCreators";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import Axios from 'axios'
+import Axios from "axios";
 
 export default function HomeFunc() {
-  const [productShow,setProductShow]=useState([])
-  const dispatch = useDispatch()
-  let history = useHistory()
+  const [productShow, setProductShow] = useState([]);
+  const dispatch = useDispatch();
+  let history = useHistory();
 
   const { isLoggedIn, user } = useSelector((state) => ({
     isLoggedIn: state.auth.isLoggedIn,
@@ -42,20 +43,20 @@ export default function HomeFunc() {
   console.log(user);
 
   const handleLogout = () => {
-    firebaseAuthentication.signOut()
+    firebaseAuthentication
+      .signOut()
       .then(() => {
-        dispatch(logoutUser())
-        return false
+        dispatch(logoutUser());
+        return false;
       })
       .catch((error) => {
         alert(error);
       });
   };
 
-  const detailHandler=(id)=>{
-    history.push(`/product-detail/${id}`)
-  }
-
+  const detailHandler = (id) => {
+    history.push(`/product-detail/${id}`);
+  };
 
   const slideCarousels = [
     {
@@ -109,27 +110,26 @@ export default function HomeFunc() {
     },
   ];
 
-  const showProducts=()=>{
-    Axios.get(`http://localhost:3300/api/product/get-product`)
-    .then(res=>{
-      let homeProducts = res.data
-      setProductShow(homeProducts)
-      console.log(homeProducts)
-    })
-  }
+  const showProducts = () => {
+    Axios.get(`http://localhost:3300/api/product/home-product`).then((res) => {
+      let homeProducts = res.data;
+      setProductShow(homeProducts);
+      console.log(homeProducts);
+    });
+  };
 
-  const cartBtnHandler = (id) =>{
-    if(id){
-      history.push(`/cart/${id}`)
+  const cartBtnHandler = (id) => {
+    if (id) {
+      history.push(`/cart/${id}`);
     } else {
-      alert("Mohon Login Untuk Melihat Cart Anda")
+      alert("Mohon Login Untuk Melihat Cart Anda");
     }
-    
-  } 
+  };
 
-  useEffect(()=>{
-    showProducts()
-  },[])
+
+  useEffect(() => {
+    showProducts();
+  }, []);
 
   return (
     <>
@@ -174,6 +174,15 @@ export default function HomeFunc() {
                           </Link>
                         </MenuItem>
                         <MenuItem onClick={popupState.close}>
+                          <Link
+                            to={`/my-order/${userUID}`}
+                            style={{ textDecoration: "none", color: "black" }}
+                          >
+                            <ShoppingBagOutlinedIcon />
+                            Order List
+                          </Link>
+                        </MenuItem>
+                        <MenuItem onClick={popupState.close}>
                           <button className="logout-btn" onClick={handleLogout}>
                             <div className="logout-wrapper">
                               <div>
@@ -206,9 +215,9 @@ export default function HomeFunc() {
                 </button>
               </Link>
               <IconButton>
-                 <NotificationsOutlinedIcon />
+                <NotificationsOutlinedIcon />
               </IconButton>
-              <IconButton  onClick={() => cartBtnHandler(userUID)}>
+              <IconButton onClick={() => cartBtnHandler(userUID)}>
                 <ShoppingCartOutlinedIcon />
               </IconButton>
             </div>
@@ -266,17 +275,20 @@ export default function HomeFunc() {
             </div>
           </div>
           <div className="product-card">
-            {productShow.map((items) => (
-              <div>
-                <button onClick={()=>detailHandler(items.id)}>
-                  <div className="product-list">
-                    <img src={items.picture} />
-                    <div>{items.product_detail}</div>
-                    <div>{items.price}</div>
+            {productShow
+              ? productShow.map((items) => (
+                  <div>
+                    <button onClick={() => detailHandler(items.id)}>
+                      <div className="product-list">
+                        <img src={items.picture} />
+                        <div>{items.product_detail}</div>
+                        <div>{items.price}</div>
+                      </div>
+                    </button>
                   </div>
-                </button>
-              </div>
-            ))}
+                ))
+              : null}
+
           </div>
         </div>
       </Container>

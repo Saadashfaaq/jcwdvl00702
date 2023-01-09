@@ -64,7 +64,11 @@ function AddressList() {
       <Container maxWidth="xs" className="mobile">
         <div className="address-page">
           <div className="address-arrow-detail">
-            <ArrowBackIcon />
+            <Link to ="/">
+              <button className="back-btn">
+                <ArrowBackIcon />
+              </button>
+            </Link>
             <div>Select address</div>
           </div>
           <div className="address-list">

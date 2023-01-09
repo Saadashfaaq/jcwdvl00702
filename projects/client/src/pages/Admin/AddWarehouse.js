@@ -33,10 +33,13 @@ function AddWarehouse() {
   const [latitude, setLatitude] = useState();
   const [longitude, setLongitude] = useState();
   const [city, setCity] = useState();
+  const [cityData, setCityData] = useState()
+  const [city_id, setCity_id] = useState()
   const [postal_code, setPostal_code] = useState();
   const [picture, setPicture] = useState();
   const [admin, setAdmin] = useState();
   const [preview, setPreview] = useState("");
+  const [dataCity, setDataCity] = useState()
   //  console.log(currentUser);
   // const userUID = currentUser?.uid;
   // console.log(userUID);
@@ -111,6 +114,22 @@ function AddWarehouse() {
     setPreview(URL.createObjectURL(image));
   };
 
+  const cityCheck=(e)=>{
+    setCityData(e)
+    const splitCity = cityData.split(" ")
+    let cityName = ""
+    if(splitCity.length>2){
+      for(let x=0;x<(splitCity.length-1);x++){
+        cityName = cityName + splitCity[x] + " "
+      }
+      setCity(cityName)
+      console.log(city)
+    } else {
+      setCity(splitCity[0])
+    }
+    setCity_id(splitCity[splitCity.length-1])
+  }
+
   const postLatLong = async () => {
     const data = {
       city: city,
@@ -131,6 +150,7 @@ function AddWarehouse() {
 
   const addWarehouse = async (e) => {
     e.preventDefault();
+    
     const formData = new FormData();
     formData.append("warehouse_name", warehouse_name);
     formData.append("warehouse_address", warehouse_address);
@@ -141,7 +161,7 @@ function AddWarehouse() {
     formData.append("longitude", longitude);
     formData.append("picture", picture);
     formData.append("admin", admin);
-
+    formData.append("city_id", city_id)
     try {
       await Axios.post(
         `http://localhost:3300/api/warehouse/add-new-warehouse`,
@@ -266,16 +286,16 @@ function AddWarehouse() {
               label="City"
               id="select-city"
               helperText="Select City"
-              onChange={(e) => setCity(e.target.value)}
+              onChange={(e) => cityCheck(e.target.value)}
               onClick={postLatLong}
             >
               {cities?.rajaongkir.results.map((cityDetail) => {
                 return (
                   <MenuItem
-                    key={cityDetail.city_name}
-                    value={cityDetail.city_name}
+                    // key={cityDetail.city_name}
+                    value={cityDetail.city_name + " " + cityDetail.city_id}
                   >
-                    {cityDetail.city_name}
+                    {`${cityDetail.city_name} ${cityDetail.city_id}`}
                   </MenuItem>
                 );
               })}

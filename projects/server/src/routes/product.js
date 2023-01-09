@@ -70,6 +70,31 @@ router.post('/add-product', upload.single('picture'), async (req, res) => {
   }
 });
 
+// Show Product @Homepage
+router.get('/home-product/', async (req, res) => {
+  try {
+    let searchQuery = req.query.searchQuery || '';
+    console.log('req query ges', req.query.searchQuery);
+    let getProduct = await Product.findAll({
+      where: {
+        name: { [Op.like]: '%' + searchQuery + '%' },
+      },
+    });
+
+    console.log('ini get Product', getProduct[0].picture);
+
+    for (let i = 0; i < getProduct.length; i++) {
+      let picPathArray = getProduct[i].picture.split('\\');
+      let picPath = 'http://localhost:3300/' + picPathArray[1] + '/' + picPathArray[2];
+      getProduct[i].picture = picPath;
+    }
+    console.log('url check', getProduct[0].picture)
+    res.status(200).json(getProduct);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
 // GET PRODUCT LIST
 router.get('/get-product', async (req, res) => {
   try {
@@ -123,7 +148,7 @@ router.get('/get-product/:id', async (req, res) => {
         id: req.params.id,
       },
     });
-    let picPathArray = getProduct.picture.split('/');
+    let picPathArray = getProduct.picture.split('\\');
     let picPath = 'http://localhost:3300/' + picPathArray[1] + '/' + picPathArray[2];
     getProduct.picture = picPath;
 

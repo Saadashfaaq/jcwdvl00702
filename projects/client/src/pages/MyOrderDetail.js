@@ -14,10 +14,10 @@ import {
 } from "@mui/material";
 import { useHistory, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import "../../assets/styles/OrderDetailAdmin.css";
+import "../assets/styles/OrderDetailAdmin.css";
 import Axios from "axios";
 
-export default function OrderDetailAdmin() {
+export default function MyOrderDetail() {
   const history = useHistory();
   const goBack = () => {
     history.goBack();
@@ -36,16 +36,11 @@ export default function OrderDetailAdmin() {
   const [paymentIsDone, setPaymentIsDone] = useState(false);
   const [orderDetails, setOrderDetails] = useState();
   const [orderitemDet, setOrderitemDet] = useState();
-  const [userId, setUserId] = useState();
-  const location = useLocation();
-
-  const userCalledId = location?.state;
-  console.log(userCalledId);
 
   useEffect(() => {
     const getOrderList = async () => {
       const response = await Axios.get(
-        `http://localhost:3300/api/order/get-order-cart-product/${userCalledId}`
+        `http://localhost:3300/api/order/get-order-cart-product/${userUID}`
       );
       console.log(response?.data);
       console.log(response?.data.orderitems, "ini orderitems");

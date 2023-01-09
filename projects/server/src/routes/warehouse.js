@@ -82,7 +82,8 @@ router.post("/add-new-warehouse", upload.single('picture'), async (req, res) => 
       latitude: req.body.latitude,
       longitude: req.body.longitude,
       picture: req.file.path,
-      admin: req.body.admin
+      admin: req.body.admin,
+      city_id: req.body.city_id,
     });
     const warehouse = await newWarehouse.save();
     res.status(200).json(warehouse);
@@ -110,6 +111,30 @@ router.get("/warehouse-list", async (req, res) => {
     // //  response.picture = picPath;
     // console.log(picPath)
     // console.log(JSON.stringify(response.picture))
+    res.json(response);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+// Get All WH Locations for choose address
+router.get("/wh-all",async(req,res)=>{
+  try{
+    const result = await Warehouse.findAll()
+    return res.status(200).send(result)
+  } catch(err){
+    return res.status(500).json({message:err.toString()})
+  }
+})
+
+// get warehouse by city id
+router.get('/wh-city-id', async (req, res) => {
+  try {
+    const response = await Warehouse.findOne({
+      where: {
+        city_id: req.body.city_id
+      },
+    });
     res.json(response);
   } catch (error) {
     console.log(error);

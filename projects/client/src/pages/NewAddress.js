@@ -97,7 +97,6 @@ function NewAddress() {
       setCity(splitCity[0])
     }
     setCity_id(splitCity[splitCity.length-1])
-    console.log(city_id)
   }
 
   const postLatLong = async () => {
