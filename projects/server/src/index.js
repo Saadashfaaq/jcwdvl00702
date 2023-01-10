@@ -10,7 +10,7 @@ const addressRoute = require('./routes/address');
 const warehouseRoute = require('./routes/warehouse');
 const cartRoute = require('./routes/cart');
 const orderRoute = require('./routes/order');
-const orderItemRoute = require("./routes/orderitem")
+const orderItemRoute = require('./routes/orderitem');
 
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -33,6 +33,8 @@ app.use('/orderimages', express.static(path.join(__dirname, '../public/orderimag
   await db.sequelize.sync();
 })();
 
+// db.sequelize.sync();
+
 app.use('/api/customer', customerRoute);
 app.use('/api/admin', adminRoute);
 app.use('/api/product', productRoute);
@@ -40,6 +42,6 @@ app.use('/api/address', addressRoute);
 app.use('/api/warehouse', warehouseRoute);
 app.use('/api/cart', cartRoute);
 app.use('/api/order', orderRoute);
-app.use("/api/orderitem", orderItemRoute)
+app.use('/api/orderitem', orderItemRoute);
 
 app.listen(PORT, () => console.log(`API running:`, PORT));

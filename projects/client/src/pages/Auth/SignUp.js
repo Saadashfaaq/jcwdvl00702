@@ -25,6 +25,13 @@ function SignUp() {
   let history = useHistory();
   const dispatch = useDispatch();
 
+  // const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
+  // useEffect(() => {
+  //   if (!isLoggedIn) {
+  //     history.push('/');
+  //   }
+  // });
+
   const [isCheck, setIscheck] = useState(true);
   const changeIsCheck = () => {
     setIscheck(!isCheck);

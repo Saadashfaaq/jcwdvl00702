@@ -21,6 +21,7 @@ import '../../assets/styles/ProductListAdmin.css';
 class ProductListAdmin extends React.Component {
   state = {
     productList: [],
+    categoryList: [],
     page: 0,
     pages: 0,
     sort: '',
@@ -67,6 +68,16 @@ class ProductListAdmin extends React.Component {
         });
       })
       .catch(() => {
+        alert('Terjadi kesalahan di server');
+      });
+  };
+
+  fetchCategories = () => {
+    Axios.get('http://localhost:3300/api/product/get-category')
+      .then((result) => {
+        this.setState({ ...this.state, categoryList: result.data });
+      })
+      .catch((err) => {
         alert('Terjadi kesalahan di server');
       });
   };
@@ -171,9 +182,9 @@ class ProductListAdmin extends React.Component {
             <div className="plc-detail-subname-2">Product ID: {val.id}</div>
             <div className="plc-detail-subname">
               <div className="plc-detail-subname-1">
-                <SportsSoccerOutlined />
+                <img src={val.category.picture} />
               </div>
-              <div className="plc-detail-subname-2">{val.category}</div>
+              <div className="plc-detail-subname-2">{val.category.name}</div>
             </div>
             <div className="plc-detail-bottom">
               <Button
@@ -265,11 +276,9 @@ class ProductListAdmin extends React.Component {
                           this.setState({ ...this.state, page: 0 });
                         }}
                         sx={{ fontFamily: 'Lora' }}>
-                        {/* <img src="https://img.icons8.com/fluency-systems-filled/22/null/sort-numeric-up.png" /> */}
                         Name
                       </MenuItem>
                       <MenuItem onClick={() => this.fetchProducts(0, 'createdAt', '')} sx={{ fontFamily: 'Lora' }}>
-                        {/* <img src="https://img.icons8.com/windows/24/null/sort-numeric-up-reversed.png" /> */}
                         ID
                       </MenuItem>
                     </Menu>

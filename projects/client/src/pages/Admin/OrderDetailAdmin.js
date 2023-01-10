@@ -1,5 +1,5 @@
-import { useState, Fragment, useEffect } from "react";
-import { ArrowBack } from "@mui/icons-material";
+import { useState, Fragment, useEffect } from 'react';
+import { ArrowBack } from '@mui/icons-material';
 import {
   Container,
   Button,
@@ -11,11 +11,11 @@ import {
   Paper,
   Typography,
   Box,
-} from "@mui/material";
-import { useHistory, useLocation } from "react-router-dom";
-import { useSelector } from "react-redux";
-import "../../assets/styles/OrderDetailAdmin.css";
-import Axios from "axios";
+} from '@mui/material';
+import { useHistory, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import '../../assets/styles/OrderDetailAdmin.css';
+import Axios from 'axios';
 
 export default function OrderDetailAdmin() {
   const history = useHistory();
@@ -44,11 +44,9 @@ export default function OrderDetailAdmin() {
 
   useEffect(() => {
     const getOrderList = async () => {
-      const response = await Axios.get(
-        `http://localhost:3300/api/order/get-order-cart-product/${userCalledId}`
-      );
+      const response = await Axios.get(`http://localhost:3300/api/order/get-order-cart-product/${userCalledId}`);
       console.log(response?.data);
-      console.log(response?.data.orderitems, "ini orderitems");
+      console.log(response?.data.orderitems, 'ini orderitems');
       setOrderDetails(response?.data);
       setOrderitemDet(response?.data.orderitems);
     };
@@ -69,23 +67,23 @@ export default function OrderDetailAdmin() {
 
   const steps = [
     {
-      label: "Waiting For Payment",
+      label: 'Waiting For Payment',
       description: `Waiting for User to upload Proof of Payment. Automatic cancel on 11-12-2022 at 11:34.`,
     },
     {
-      label: "Payment Confirmation",
-      description: "See Proof of Payment first.",
+      label: 'Payment Confirmation',
+      description: 'See Proof of Payment first.',
     },
     {
-      label: "In Process",
+      label: 'In Process',
       description: `Click "Done" only if the order is ready for shipping.`,
     },
     {
-      label: "In Delivery",
+      label: 'In Delivery',
       description: `Wait for shipping update from provider. Track number: 0000123456789. Wait for user confirmation.`,
     },
     {
-      label: "Received",
+      label: 'Received',
       description: `Order is received by User. Process is finished.`,
     },
     // {
@@ -101,38 +99,29 @@ export default function OrderDetailAdmin() {
           <div className="od-card-main">
             <>
               <div className="od-card-image">
-                <img
-                  src={orderitem?.product.picture}
-                  className="od-card-product"
-                  alt="Product Image"
-                />
+                <img src={orderitem?.product.picture} className="od-card-product" alt="Product Image" />
               </div>
 
               <div className="od-card-detail">
-                <div className="od-card-detail-name">
-                  {orderitem?.product.product_detail}
-                </div>
+                <div className="od-card-detail-name">{orderitem?.product.product_detail}</div>
                 <div className="od-card-detail-subname">
                   {orderitem?.product.name} | {orderitem?.product.category}
                 </div>
                 <div className="od-card-detail-bottom">
-                  <div className="od-card-detail-bottom-price">
-                    Rp {orderitem?.product.price}
-                  </div>
+                  <div className="od-card-detail-bottom-price">Rp {orderitem?.product.price}</div>
                 </div>
                 <Button
                   disabled
                   className="od-card-button-list"
                   sx={{
-                    width: "50px",
-                    borderRadius: "20px",
-                    fontSize: "13px",
-                    backgroundColor: "gray",
-                    border: "none",
-                    fontWeight: "700",
-                    color: "black",
-                  }}
-                >
+                    width: '50px',
+                    borderRadius: '20px',
+                    fontSize: '13px',
+                    backgroundColor: 'gray',
+                    border: 'none',
+                    fontWeight: '700',
+                    color: 'black',
+                  }}>
                   {orderitem.quantity}
                 </Button>
               </div>
@@ -143,8 +132,13 @@ export default function OrderDetailAdmin() {
     );
   };
 
+  const paymentDetail = [
+    { title: 'Total', value: 'Rp 126.789.999 ,-' },
+    { title: 'Payment Method', value: 'Bank Transfer' },
+  ];
+
   return (
-    <Container maxWidth="xs" sx={{ backgroundColor: "white" }}>
+    <Container maxWidth="xs" sx={{ backgroundColor: 'white' }}>
       <div className="oda-main">
         <div className="oda-banner">
           <IconButton onClick={goBack}>
@@ -154,34 +148,26 @@ export default function OrderDetailAdmin() {
         </div>
         <div className="oda-user">
           <div className="oda-user-left">Order Date</div>
-          <div className="oda-user-right">
-            {orderDetails?.orderitems[0].createdAt}
-          </div>
+          <div className="oda-user-right">{orderDetails?.orderitems[0].createdAt}</div>
           <div className="oda-user-left">Customer Name</div>
           <div className="oda-user-right">
             {orderDetails?.fullname}
             <div className="oda-user-left">Customer ID</div>
             <div className="oda-user-right">{orderDetails?.customer_uid}</div>
             <div className="oda-user-left">Shipping Address</div>
-            <div className="oda-user-right">
-              {orderDetails?.shipping_address}
-            </div>
+            <div className="oda-user-right">{orderDetails?.shipping_address}</div>
           </div>
         </div>
         <div className="oda-step">
           <div className="oda-step-text">Order Status</div>
 
-          <Box sx={{ mb: 2, fontFamily: "Lora" }}>
+          <Box sx={{ mb: 2, fontFamily: 'Lora' }}>
             <Stepper activeStep={activeStep} orientation="vertical">
               {steps.map((step, index) => (
                 <Step key={step.label}>
-                  <StepLabel sx={{ fontFamily: "Lora" }}>
-                    {step.label}
-                  </StepLabel>
+                  <StepLabel sx={{ fontFamily: 'Lora' }}>{step.label}</StepLabel>
                   <StepContent>
-                    <Typography sx={{ fontFamily: "Lora", fontSize: "11px" }}>
-                      {step.description}
-                    </Typography>
+                    <Typography sx={{ fontFamily: 'Lora', fontSize: '11px' }}>{step.description}</Typography>
                     <Box sx={{ mb: 2 }}>
                       <div>
                         {index === 0 || index === 3 ? (
@@ -190,10 +176,9 @@ export default function OrderDetailAdmin() {
                             sx={{
                               mt: 1,
                               mr: 1,
-                              fontFamily: "Lora",
-                              fontSize: "12px",
-                            }}
-                          >
+                              fontFamily: 'Lora',
+                              fontSize: '12px',
+                            }}>
                             Waiting...
                           </Button>
                         ) : null}
@@ -205,10 +190,9 @@ export default function OrderDetailAdmin() {
                               sx={{
                                 mt: 1,
                                 mr: 1,
-                                fontFamily: "Lora",
-                                fontSize: "12px",
-                              }}
-                            >
+                                fontFamily: 'Lora',
+                                fontSize: '12px',
+                              }}>
                               Accept
                             </Button>
                             <Button
@@ -217,10 +201,9 @@ export default function OrderDetailAdmin() {
                               sx={{
                                 mt: 1,
                                 mr: 1,
-                                fontFamily: "Lora",
-                                fontSize: "12px",
-                              }}
-                            >
+                                fontFamily: 'Lora',
+                                fontSize: '12px',
+                              }}>
                               Reject
                             </Button>
                           </>
@@ -233,10 +216,9 @@ export default function OrderDetailAdmin() {
                               sx={{
                                 mt: 1,
                                 mr: 1,
-                                fontFamily: "Lora",
-                                fontSize: "12px",
-                              }}
-                            >
+                                fontFamily: 'Lora',
+                                fontSize: '12px',
+                              }}>
                               Done
                             </Button>
                           </>
@@ -251,11 +233,10 @@ export default function OrderDetailAdmin() {
               <Paper square elevation={0} sx={{ p: 3 }}>
                 <Typography
                   sx={{
-                    fontFamily: "Lora",
-                    fontSize: "15px",
-                    fontWeight: "bold",
-                  }}
-                >
+                    fontFamily: 'Lora',
+                    fontSize: '15px',
+                    fontWeight: 'bold',
+                  }}>
                   Order is complete !
                 </Typography>
               </Paper>
@@ -268,20 +249,14 @@ export default function OrderDetailAdmin() {
           <div className="oda-payment-detail">
             <div className="oda-payment-wrapper">
               <div className="oda-payment-left">Total</div>
-              <div className="oda-payment-right">
-                Rp {orderDetails?.total_price}
-              </div>
+              <div className="oda-payment-right">Rp {orderDetails?.total_price}</div>
             </div>
             <div className="oda-payment-wrapper">
               <div className="oda-payment-left">Payment Method</div>
               <div className="oda-payment-right">Bank Transfer</div>
             </div>
           </div>
-          <img
-            src={orderDetails?.payment_picture}
-            alt="Payment Proof"
-            className="oda-payment-img"
-          />
+          <img src={orderDetails?.payment_picture} alt="Payment Proof" className="oda-payment-img" />
         </div>
 
         <div className="oda-list">

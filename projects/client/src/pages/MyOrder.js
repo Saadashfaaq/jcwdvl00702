@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   IconButton,
   Box,
@@ -17,19 +17,14 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-} from "@mui/material";
-import {
-  Search,
-  SortTwoTone,
-  MoreHoriz,
-  ContentPaste,
-} from "@mui/icons-material";
-import { TabPanel, TabList, TabContext } from "@mui/lab";
-import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
-import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
-import "../assets/styles/OrderList.css";
-import Axios from "axios";
+} from '@mui/material';
+import { Search, SortTwoTone, MoreHoriz, ContentPaste } from '@mui/icons-material';
+import { TabPanel, TabList, TabContext } from '@mui/lab';
+import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
+import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
+import '../assets/styles/OrderList.css';
+import Axios from 'axios';
 
 function MyOrder() {
   const { isLoggedIn, user } = useSelector((state) => ({
@@ -63,9 +58,7 @@ function MyOrder() {
 
   useEffect(() => {
     const getOrderList = async () => {
-      const response = await Axios.get(
-        `http://localhost:3300/api/order/get-order-cart-user-product/${userUID}`
-      );
+      const response = await Axios.get(`http://localhost:3300/api/order/get-order-cart-user-product/${userUID}`);
       console.log(response?.data);
       setOrderDetails(response?.data);
     };
@@ -109,57 +102,39 @@ function MyOrder() {
   // };
 
   const olistcDetailStatus = (status) => {
-    if (status === "1") {
+    if (status === '1') {
       return (
-        <Box
-          className="moc-detail-status-1"
-          sx={{ backgroundColor: "rgb(255,165,0,0.4)" }}
-        >
+        <Box className="moc-detail-status-1" sx={{ backgroundColor: 'rgb(255,165,0,0.4)' }}>
           Waiting for payment
         </Box>
       );
-    } else if (status === "2") {
+    } else if (status === '2') {
       return (
-        <Box
-          className="moc-detail-status-2"
-          sx={{ backgroundColor: "rgb(255,215,0,0.4)" }}
-        >
+        <Box className="moc-detail-status-2" sx={{ backgroundColor: 'rgb(255,215,0,0.4)' }}>
           Payment confirmation
         </Box>
       );
-    } else if (status === "3") {
+    } else if (status === '3') {
       return (
-        <Box
-          className="moc-detail-status-3"
-          sx={{ backgroundColor: "rgb(152,251,152,0.4)" }}
-        >
+        <Box className="moc-detail-status-3" sx={{ backgroundColor: 'rgb(152,251,152,0.4)' }}>
           In process
         </Box>
       );
-    } else if (status === "4") {
+    } else if (status === '4') {
       return (
-        <Box
-          className="moc-detail-status-4"
-          sx={{ backgroundColor: "rgba(127, 255, 212, 0.4)" }}
-        >
+        <Box className="moc-detail-status-4" sx={{ backgroundColor: 'rgba(127, 255, 212, 0.4)' }}>
           In delivery
         </Box>
       );
-    } else if (status === "5") {
+    } else if (status === '5') {
       return (
-        <Box
-          className="moc-detail-status-5"
-          sx={{ backgroundColor: "rgb(72,209,204,0.4)" }}
-        >
+        <Box className="moc-detail-status-5" sx={{ backgroundColor: 'rgb(72,209,204,0.4)' }}>
           Received
         </Box>
       );
     } else {
       return (
-        <Box
-          className="moc-detail-status-6"
-          sx={{ backgroundColor: "rgb(220,20,60,0.4)" }}
-        >
+        <Box className="moc-detail-status-6" sx={{ backgroundColor: 'rgb(220,20,60,0.4)' }}>
           Canceled
         </Box>
       );
@@ -171,11 +146,7 @@ function MyOrder() {
       <PopupState variant="popover" popupId="demo-popup-menu">
         {(popupState) => (
           <React.Fragment>
-            <button
-              className="account-button"
-              variant="contained"
-              {...bindTrigger(popupState)}
-            >
+            <button className="account-button" variant="contained" {...bindTrigger(popupState)}>
               <IconButton>
                 <MoreHoriz />
               </IconButton>
@@ -192,34 +163,22 @@ function MyOrder() {
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link
-                  to="/warehouse-management"
-                  className="userlist-banner-menu-link"
-                >
+                <Link to="/warehouse-management" className="userlist-banner-menu-link">
                   Warehouse Mng.
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link
-                  to="/products-management-list"
-                  className="userlist-banner-menu-link"
-                >
+                <Link to="/products-management-list" className="userlist-banner-menu-link">
                   Product List
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link
-                  to="/products-management-category"
-                  className="userlist-banner-menu-link"
-                >
+                <Link to="/products-management-category" className="userlist-banner-menu-link">
                   Product Category
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link
-                  to="/stock-mutation"
-                  className="userlist-banner-menu-link"
-                >
+                <Link to="/stock-mutation" className="userlist-banner-menu-link">
                   Stock Mutation
                 </Link>
               </MenuItem>
@@ -262,50 +221,34 @@ function MyOrder() {
             <div className="olistc-detail">
               {/* {orderDetail.orderitems?.map((orderitem) => ( */}
               <>
-                <div className="olistc-detail-name">
-                  {orderDetails[0].orderitems[0].order_id}
-                </div>
-                <div className="olistc-detail-subname">
-                  {orderDetails[0].orderitems[0].updatedAt}
-                </div>
-                <div className="olistc-detail-subname">
-                  {orderDetails[0].customer_uid}
-                </div>
-                <div className="olistc-detail-subname">
-                  {orderDetails[0].fullname}
-                </div>
-                <div className="olistc-detail-subname">
-                  Warehouse {orderDetails[0].orderitems[0].warehouse_id}
-                </div>
+                <div className="olistc-detail-name">{orderDetails[0].orderitems[0].order_id}</div>
+                <div className="olistc-detail-subname">{orderDetails[0].orderitems[0].updatedAt}</div>
+                <div className="olistc-detail-subname">{orderDetails[0].customer_uid}</div>
+                <div className="olistc-detail-subname">{orderDetails[0].fullname}</div>
+                <div className="olistc-detail-subname">Warehouse {orderDetails[0].orderitems[0].warehouse_id}</div>
               </>
               <div className="olistc-detail-bottom">
                 <Button
                   sx={{
-                    borderRadius: "20px",
-                    backgroundColor: "white",
-                    color: "red",
-                    fontSize: "8px",
-                    fontFamily: "Lora",
+                    borderRadius: '20px',
+                    backgroundColor: 'white',
+                    color: 'red',
+                    fontSize: '8px',
+                    fontFamily: 'Lora',
                   }}
                   variant="contained"
                   onClick={handleClickOpenCancel}
-                  className="olistc-detail-bottom-track"
-                >
+                  className="olistc-detail-bottom-track">
                   Cancel
                 </Button>
                 <Dialog
                   open={openC}
                   onClose={handleCloseCancel}
                   aria-labelledby="alert-dialog-title"
-                  aria-describedby="alert-dialog-description"
-                >
-                  <DialogTitle id="alert-dialog-title">
-                    {"Cancel this order"}
-                  </DialogTitle>
+                  aria-describedby="alert-dialog-description">
+                  <DialogTitle id="alert-dialog-title">{'Cancel this order'}</DialogTitle>
                   <DialogContent>
-                    <DialogContentText id="alert-dialog-description">
-                      Are you sure ?
-                    </DialogContentText>
+                    <DialogContentText id="alert-dialog-description">Are you sure ?</DialogContentText>
                   </DialogContent>
                   <DialogActions>
                     <Button onClick={handleCloseCancel}>No</Button>
@@ -317,18 +260,16 @@ function MyOrder() {
                 <Link
                   to={{
                     pathname: `/my-order-detail/${userUID}`,
-                  }}
-                >
+                  }}>
                   <Button
                     sx={{
-                      borderRadius: "20px",
-                      backgroundColor: "black",
-                      fontSize: "8px",
-                      fontFamily: "Lora",
+                      borderRadius: '20px',
+                      backgroundColor: 'black',
+                      fontSize: '8px',
+                      fontFamily: 'Lora',
                     }}
                     variant="contained"
-                    className="olistc-detail-bottom-track"
-                  >
+                    className="olistc-detail-bottom-track">
                     Detail
                   </Button>
                 </Link>
@@ -341,7 +282,7 @@ function MyOrder() {
   };
 
   return (
-    <Container maxWidth="xs" sx={{ backgroundColor: "white" }}>
+    <Container maxWidth="xs" sx={{ backgroundColor: 'white' }}>
       <div className="orderlist-main">
         <div className="orderlist-banner">
           <div className="orderlist-banner-logo">
@@ -354,9 +295,9 @@ function MyOrder() {
             <>
               <ClickAwayListener onClickAway={isSearchHandleClose}>
                 <InputBase
-                  sx={{ ml: 1, flex: 1, fontFamily: "Lora" }}
+                  sx={{ ml: 1, flex: 1, fontFamily: 'Lora' }}
                   placeholder="Order ID"
-                  inputProps={{ "aria-label": "Search" }}
+                  inputProps={{ 'aria-label': 'Search' }}
                   className="orderlist-search"
                   endAdornment={
                     <InputAdornment position="end">
@@ -383,31 +324,21 @@ function MyOrder() {
             <PopupState variant="popover" popupId="demo-popup-menu">
               {(popupState) => (
                 <React.Fragment>
-                  <button
-                    className="account-button"
-                    variant="contained"
-                    {...bindTrigger(popupState)}
-                  >
+                  <button className="account-button" variant="contained" {...bindTrigger(popupState)}>
                     <IconButton>
                       <SortTwoTone />
                     </IconButton>
                   </button>
                   <Menu {...bindMenu(popupState)}>
-                    <MenuItem
-                      onClick={popupState.close}
-                      sx={{ fontFamily: "Lora" }}
-                    >
+                    <MenuItem onClick={popupState.close} sx={{ fontFamily: 'Lora' }}>
                       <img src="https://img.icons8.com/fluency-systems-filled/22/null/sort-numeric-up.png" />
                       Oldest
                     </MenuItem>
-                    <MenuItem
-                      onClick={popupState.close}
-                      sx={{ fontFamily: "Lora" }}
-                    >
+                    <MenuItem onClick={popupState.close} sx={{ fontFamily: 'Lora' }}>
                       <img src="https://img.icons8.com/windows/24/null/sort-numeric-up-reversed.png" />
                       Recent
                     </MenuItem>
-                    {userData === "admin" ? (
+                    {userData === 'admin' ? (
                       <>
                         <MenuItem>
                           <img src="https://img.icons8.com/ios/24/null/garage-closed.png" />
@@ -436,23 +367,12 @@ function MyOrder() {
         </div>
 
         <div className="orderlist-tab">
-          <Box sx={{ width: "100%", typography: "body1" }}>
+          <Box sx={{ width: '100%', typography: 'body1' }}>
             <TabContext value={activeTab}>
-              <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-                <TabList
-                  onChange={handleChange}
-                  aria-label="lab API tabs example"
-                >
-                  <Tab
-                    sx={{ marginLeft: "20px", fontFamily: "Lora" }}
-                    label="On Going"
-                    value="1"
-                  />
-                  <Tab
-                    sx={{ marginLeft: "100px", fontFamily: "Lora" }}
-                    label="Completed"
-                    value="2"
-                  />
+              <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                <TabList onChange={handleChange} aria-label="lab API tabs example">
+                  <Tab sx={{ marginLeft: '20px', fontFamily: 'Lora' }} label="On Going" value="1" />
+                  <Tab sx={{ marginLeft: '100px', fontFamily: 'Lora' }} label="Completed" value="2" />
                 </TabList>
               </Box>
               <>
@@ -466,12 +386,8 @@ function MyOrder() {
                             className="orderlist-og-logo"
                             alt="No Order"
                           />
-                          <div className="orderlist-og-text-1">
-                            You don't have an order yet
-                          </div>
-                          <div className="orderlist-og-text-2">
-                            You don't have On Going orders at this time
-                          </div>
+                          <div className="orderlist-og-text-1">You don't have an order yet</div>
+                          <div className="orderlist-og-text-2">You don't have On Going orders at this time</div>
                         </div>
                       </TabPanel>
                     ) : (
@@ -481,12 +397,11 @@ function MyOrder() {
                         <Stack
                           spacing={1}
                           sx={{
-                            position: "fixed",
-                            top: "78%",
-                            width: "110%",
-                            fontFamily: "Lora",
-                          }}
-                        >
+                            position: 'fixed',
+                            top: '78%',
+                            width: '110%',
+                            fontFamily: 'Lora',
+                          }}>
                           <Pagination count={10} />
                         </Stack>
                       </TabPanel>
@@ -504,12 +419,11 @@ function MyOrder() {
                         <Stack
                           spacing={1}
                           sx={{
-                            position: "fixed",
-                            top: "78%",
-                            width: "110%",
-                            fontFamily: "Lora",
-                          }}
-                        >
+                            position: 'fixed',
+                            top: '78%',
+                            width: '110%',
+                            fontFamily: 'Lora',
+                          }}>
                           <Pagination count={10} />
                         </Stack>
                       </TabPanel>
@@ -521,12 +435,8 @@ function MyOrder() {
                             className="orderlist-og-logo"
                             alt="No Order"
                           />
-                          <div className="orderlist-og-text-1">
-                            You don't have an order yet
-                          </div>
-                          <div className="orderlist-og-text-2">
-                            You don't have Completed orders at this time
-                          </div>
+                          <div className="orderlist-og-text-1">You don't have an order yet</div>
+                          <div className="orderlist-og-text-2">You don't have Completed orders at this time</div>
                         </div>
                       </TabPanel>
                     )}

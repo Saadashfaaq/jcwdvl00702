@@ -35,10 +35,12 @@ export default function ProductDetailAdmin() {
   const [picture, setPicture] = useState('');
   const [preview, setPreview] = useState('');
   const [state, setState] = useState({});
+  const [stateCategory, setStateCategory] = useState({});
   const [isSuperAdmin, setIsSuperAdmin] = useState(true);
 
   const [descript, setDescript] = useState('');
 
+  const [categoryList, setCategoryList] = useState([]);
   const [resStock, setResStock] = useState([]);
   const [refreshStock, setRefreshStock] = useState([]);
   const [stockChange, SetStockChange] = useState({
@@ -55,6 +57,7 @@ export default function ProductDetailAdmin() {
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, [refreshStock]);
 
   // Mengambil data product berdasarkan ID dari backend
@@ -62,7 +65,18 @@ export default function ProductDetailAdmin() {
     Axios.get(`http://localhost:3300/api/product/get-product/${id}`)
       .then((result) => {
         setState(result.data.getProduct);
+        setStateCategory(result.data.getProduct.category);
         setResStock(result.data.stockWh);
+      })
+      .catch((err) => {
+        alert('Terjadi kesalahan di server');
+      });
+  };
+
+  const fetchCategories = () => {
+    Axios.get('http://localhost:3300/api/product/get-category')
+      .then((result) => {
+        setCategoryList(result.data);
       })
       .catch((err) => {
         alert('Terjadi kesalahan di server');
@@ -73,7 +87,6 @@ export default function ProductDetailAdmin() {
   const deleteBtnHandler = () => {
     const confirmDelete = window.confirm('Delete Product?');
     if (confirmDelete) {
-      console.log('ini id: ', id);
       Axios.delete(`http://localhost:3300/api/product/${id}`)
         .then(() => {
           history.push(`/products-management-list`);
@@ -108,8 +121,6 @@ export default function ProductDetailAdmin() {
     }),
     validateOnChange: false,
     onSubmit: async (values) => {
-      console.log(values);
-
       const data = new FormData();
       data.append('name', values.name);
       data.append('price', values.price);
@@ -117,7 +128,6 @@ export default function ProductDetailAdmin() {
       data.append('category', selectIcon);
       data.append('picture', picture);
 
-      console.log(data);
       Axios.put(`http://localhost:3300/api/product/edit-product/${id}`, data)
         .then(() => {
           alert('Product Edited!');
@@ -308,38 +318,18 @@ export default function ProductDetailAdmin() {
                     onChange={(e) => setSelectIcon(e.target.value)}>
                     <MenuItem value={0}>
                       <em>
-                        <SportsSoccerOutlined />
-                        <span>Sports</span>
+                        <img src={stateCategory.picture} />
+                        <span>{stateCategory.name}</span>
                       </em>
                     </MenuItem>
-                    <MenuItem value={'sports'}>
-                      <SportsSoccerOutlined />
-                      <span>Sports</span>
-                    </MenuItem>
-                    <MenuItem value={'bags'}>
-                      <BusinessCenterOutlined />
-                      <span>Bags</span>
-                    </MenuItem>
-                    <MenuItem value={'bikes'}>
-                      <DirectionsBikeOutlined />
-                      <span>Bikes</span>
-                    </MenuItem>
-                    <MenuItem value={'sportwear'}>
-                      <HikingOutlined />
-                      <span>Sportswear</span>
-                    </MenuItem>
-                    <MenuItem value={'accessories'}>
-                      <HandymanOutlined />
-                      <span>Accessories</span>
-                    </MenuItem>
-                    <MenuItem value={'health'}>
-                      <MonitorHeartOutlined />
-                      <span>Health</span>
-                    </MenuItem>
-                    <MenuItem value={'fitness'}>
-                      <FitnessCenterOutlined />
-                      <span>Fitness</span>
-                    </MenuItem>
+                    {categoryList.map((val, index) => {
+                      return (
+                        <MenuItem value={categoryList[index].id}>
+                          <img src={val.picture} />
+                          {val.name}
+                        </MenuItem>
+                      );
+                    })}
                   </Select>
                 </div>
               </div>
@@ -384,8 +374,8 @@ export default function ProductDetailAdmin() {
                 </div>
                 <div className="pdadmin-desc-title-4">Product ID: {state.id}</div>
                 <div className="pdadmin-desc-title-2">
-                  <SportsSoccerOutlined />
-                  <div className="pdadmin-desc-title-3">{state.category}</div>
+                  <img src={stateCategory.picture} />
+                  <div className="pdadmin-desc-title-3">{stateCategory.name}</div>
                 </div>
               </div>
               <hr className="splitter" />

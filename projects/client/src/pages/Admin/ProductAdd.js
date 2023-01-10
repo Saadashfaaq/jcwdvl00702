@@ -1,5 +1,5 @@
 import Axios from 'axios';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ArrowBack,
   SportsSoccerOutlined,
@@ -25,7 +25,12 @@ export default function ProductAdd() {
     history.goBack();
   };
 
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
   const [selectIcon, setSelectIcon] = useState(0);
+  const [categoryList, setCategoryList] = useState([]);
   const [picture, setPicture] = useState('');
   const [qtyWh, setQtyWh] = useState([{ qty: 0 }, { qty: 0 }, { qty: 0 }]);
 
@@ -44,16 +49,15 @@ export default function ProductAdd() {
       name: '',
       price: 0,
       product_detail: '',
-      category: '',
+      category_id: '',
     },
     validationSchema: Yup.object().shape({
       name: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!'),
       product_detail: Yup.string().min(2, 'Too Short!').max(100, 'Too Long!'),
-      category: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!'),
+      category_id: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!'),
     }),
     validateOnChange: false,
     onSubmit: async (values) => {
-      console.log(values);
       const data = new FormData();
       const qtyTotal = qtyWh.reduce((accumulator, currentValue) => accumulator + parseInt(currentValue.qty), 0);
 
@@ -61,11 +65,13 @@ export default function ProductAdd() {
       data.append('price', values.price);
       data.append('quantity_total', qtyTotal);
       data.append('product_detail', values.product_detail);
-      data.append('category', selectIcon);
+      data.append('category_id', selectIcon);
       data.append('picture', picture);
       data.append('wh_1', qtyWh[0].qty);
       data.append('wh_2', qtyWh[1].qty);
       data.append('wh_3', qtyWh[2].qty);
+
+      // Axios.post('http://localhost:3300/api/product/add-product', { ...data, quantity: qtyWh })
 
       Axios.post('http://localhost:3300/api/product/add-product', data)
         .then(() => {
@@ -98,6 +104,16 @@ export default function ProductAdd() {
         </div>
       </div>
     );
+  };
+
+  const fetchCategories = () => {
+    Axios.get('http://localhost:3300/api/product/get-category')
+      .then((result) => {
+        setCategoryList(result.data);
+      })
+      .catch((err) => {
+        alert('Terjadi kesalahan di server');
+      });
   };
 
   return (
@@ -137,39 +153,19 @@ export default function ProductAdd() {
                 value={selectIcon}
                 onChange={(e) => {
                   setSelectIcon(e.target.value);
-                  formik.setFieldValue('category', e.target.value);
+                  formik.setFieldValue('category_id', e.target.value);
                 }}>
                 <MenuItem value={0}>
                   <em>Category</em>
                 </MenuItem>
-                <MenuItem value={'sports'}>
-                  <SportsSoccerOutlined />
-                  <span>Sports</span>
-                </MenuItem>
-                <MenuItem value={'bags'}>
-                  <BusinessCenterOutlined />
-                  <span>Bags</span>
-                </MenuItem>
-                <MenuItem value={'bikes'}>
-                  <DirectionsBikeOutlined />
-                  <span>Bikes</span>
-                </MenuItem>
-                <MenuItem value={'sportwear'}>
-                  <HikingOutlined />
-                  <span>Sportswear</span>
-                </MenuItem>
-                <MenuItem value={'accessories'}>
-                  <HandymanOutlined />
-                  <span>Accessories</span>
-                </MenuItem>
-                <MenuItem value={'health'}>
-                  <MonitorHeartOutlined />
-                  <span>Health</span>
-                </MenuItem>
-                <MenuItem value={'fitness'}>
-                  <FitnessCenterOutlined />
-                  <span>Fitness</span>
-                </MenuItem>
+                {categoryList.map((val, index) => {
+                  return (
+                    <MenuItem value={categoryList[index].id}>
+                      {val.name}
+                      <img src={val.picture} />
+                    </MenuItem>
+                  );
+                })}
               </Select>
             </div>
           </div>

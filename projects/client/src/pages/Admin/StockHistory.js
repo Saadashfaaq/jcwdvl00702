@@ -71,6 +71,7 @@ class StockHistory extends React.Component {
           ...(sort && { sort: sort }),
           ...(search && { search: search }),
         });
+        console.log('state', result.data.result);
       })
       .catch(() => {
         alert('Terjadi kesalahan di server');
@@ -157,9 +158,9 @@ class StockHistory extends React.Component {
 
             <div className="shc-detail-subname">
               <div className="shc-detail-subname-1">
-                <SportsSoccerOutlined />
+                <img src={val.category.picture} />
               </div>
-              <div className="shc-detail-subname-2">{val.category}</div>
+              <div className="shc-detail-subname-2">{val.category.name}</div>
             </div>
 
             <div className="shc-detail-bottom">
