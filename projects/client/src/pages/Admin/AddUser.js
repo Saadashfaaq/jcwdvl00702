@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconButton, Container, FormControl, Input, InputAdornment } from '@mui/material';
+import { IconButton, Container, FormControl, Input, InputAdornment, Select, MenuItem } from '@mui/material';
 import { ArrowBack, Person, Email, Lock, AddAPhoto, Visibility, VisibilityOff } from '@mui/icons-material';
 import '../../assets/styles/AddUser.css';
 import '../../assets/styles/DetailUser.css';
@@ -10,11 +10,15 @@ import * as Yup from 'yup';
 import YupPassword from 'yup-password';
 import { firebaseAuthentication } from '../../config/firebase';
 import { useState } from 'react';
+import { useDispatch } from "react-redux";
+import { logoutUser } from '../../redux/actionCreators/authActionCreators';
 
 export default function AddUser() {
   let history = useHistory();
+  const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [showRepassword, setShowRepassword] = useState(false);
+  const [roleSelect,setRoleSelect] = useState("")
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
@@ -27,6 +31,10 @@ export default function AddUser() {
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
   };
+
+  const alertRole=()=>{
+    console.log(roleSelect)
+  }
 
   YupPassword(Yup);
   const formik = useFormik({
@@ -69,7 +77,7 @@ export default function AddUser() {
             email: values.email,
             fullname: values.fullname,
             password: values.password,
-            is_verified: user.emailVerified,
+            is_verified: true,
             customer_uid: user.uid,
           };
           return data;
@@ -82,14 +90,32 @@ export default function AddUser() {
           var credential = err.credential;
         })
         .then((data) => {
-          Axios.post('http://localhost:3300/api/customer/register', data)
-            .then(() => {
-              return;
+          Axios.post(`${process.env.REACT_APP_API_BASE_URL}/customer/approle`,{
+            customer_uid:data.customer_uid,
+            role:"adminTBA"
+          })
+          .then(res=>{
+            Axios.post(`${process.env.REACT_APP_API_BASE_URL}/customer/register`, {
+              email: data.email,
+              fullname: data.fullname,
+              password: data.password,
+              is_verified: data.is_verified,
+              customer_uid: data.customer_uid,
             })
-            .catch((error) => {
+              .then(()=>{
+                console.log(res,': user register response')
+                alert('New admin created, please relog to continue managing dashboard')
+                firebaseAuthentication.signOut()
+                dispatch(logoutUser());
+                history.push('/sign-in')
+            })
+              .catch((error) => {
               console.log(error);
-              alert(error);
             });
+          })
+          .catch(err=>{
+            console.log(err)
+          })
         });
     },
   });
@@ -117,9 +143,9 @@ export default function AddUser() {
             src="https://media.istockphoto.com/id/1309328823/photo/headshot-portrait-of-smiling-male-employee-in-office.jpg?b=1&s=170667a&w=0&k=20&c=MRMqc79PuLmQfxJ99fTfGqHL07EDHqHLWg0Tb4rPXQc="
             alt=""
           />
-          <button className="adduser-avatar-icon">
+          {/* <button className="adduser-avatar-icon">
             <AddAPhoto />
-          </button>
+          </button> */}
         </div>
         <div className="adduser-form">
           <FormControl variant="standard" className="adduser-form-input">
@@ -136,6 +162,7 @@ export default function AddUser() {
               placeholder="Fullname"
             />
           </FormControl>
+          {formik.errors.fullname ? <div className="alert-danger">{formik.errors.fullname}</div> : null}
 
           <FormControl variant="standard" className="adduser-form-input">
             <Input
@@ -151,6 +178,7 @@ export default function AddUser() {
               placeholder="Email"
             />
           </FormControl>
+          {formik.errors.email ? <div className="alert-danger">{formik.errors.email}</div> : null}
 
           <FormControl variant="standard" className="adduser-form-input">
             <Input
@@ -178,6 +206,7 @@ export default function AddUser() {
               placeholder="Password"
             />
           </FormControl>
+          {formik.errors.password ? <div className="alert-danger">{formik.errors.password}</div> : null}
 
           <FormControl variant="standard" className="adduser-form-input">
             <Input
@@ -205,12 +234,13 @@ export default function AddUser() {
               placeholder="Re-enter Password"
             />
           </FormControl>
+          {formik.errors.repassword ? <div className="alert-danger">{formik.errors.repassword}</div> : null}
         </div>
-
         <div className="adduser-button">
           <button class="adduser-button-2" onClick={formik.handleSubmit}>
             Add User
           </button>
+          {/* <button onClick={alertRole}>Check role</button> */}
         </div>
       </div>
     </Container>

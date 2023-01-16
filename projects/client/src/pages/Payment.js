@@ -11,11 +11,12 @@ import {
 
 import Axios from "axios";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
-import { Link, useParams, useHistory } from "react-router-dom";
+import { Link, useParams, useHistory} from "react-router-dom";
 import "../assets/styles/payment.css";
 
 function Payment() {
   const { id, orderId } = useParams();
+  const history = useHistory();
 
   const [order, setOrder] = useState([]);
   const [picture, setPicture] = useState("");
@@ -24,9 +25,11 @@ function Payment() {
   const [cartPrice, setCartPrice] = useState(0);
   const [cart, setCart] = useState([]);
 
+
+
   // mengambil data order
   const getOrder = () => {
-    Axios.get(`http://localhost:3300/api/order/get-order/${id}/`)
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/order/get-order/${id}/`)
       .then((result) => {
         setOrder(result.data);
         console.log("ini order list:", result.data);
@@ -38,7 +41,9 @@ function Payment() {
 
   // mengambil cart dan product
   const cartProduct = () => {
-    Axios.get(`http://localhost:3300/api/cart/get-cart-product/${id}`)
+    Axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/cart/get-cart-product/${id}`
+    )
       .then((result) => {
         setCart(result.data);
         console.log("ini cart-product data", result.data);
@@ -50,7 +55,9 @@ function Payment() {
 
   // mengambil total harga pada cart
   const getCartPrice = () => {
-    Axios.get(`http://localhost:3300/api/cart/get-total-price/${id}`)
+    Axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/cart/get-total-price/${id}`
+    )
       .then((result) => {
         setCartPrice(result.data);
       })
@@ -68,12 +75,21 @@ function Payment() {
 
   // finish submit
   const uploadPicture = () => {
-    // Upload bukti pembayaran ke tabel order
+    if(!bank){
+      alert("mohon pilih bank terlebih dahulu")
+    } else {
+      if(!picture){
+        alert("mohon upload bukti pembayaran")
+      } else {
+        // Upload bukti pembayaran ke tabel order
     const data = new FormData();
     data.append("payment_picture", picture);
 
     console.log(data);
-    Axios.put(`http://localhost:3300/api/order/payment-proof/${id}`, data)
+    Axios.put(
+      `${process.env.REACT_APP_API_BASE_URL}/order/payment-proof/${id}`,
+      data
+    )
       .then(() => {
         alert("Payment proof uploaded!");
       })
@@ -87,12 +103,26 @@ function Payment() {
       const cartData = {
         order_id: order.id,
         product_id: cart[i].product_id,
-        warehouse_id: "A",
+        warehouse_id: order.warehouse_id,
         quantity: cart[i].quantity,
       };
-      Axios.post(`http://localhost:3300/api/orderitem/add-orderitem`, cartData)
+      Axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/orderitem/add-orderitem`,
+        cartData
+      )
         .then((response) => console.log(response.data))
         .catch((error) => console.error(error));
+    }
+
+        // delete semua cart agar user bisa order kembali
+        Axios.delete(`${process.env.REACT_APP_API_BASE_URL}/cart/delete-all-cart/${id}`)
+        .then(() => {
+          history.push(`/`);
+        })
+        .catch(() => {
+          alert("Server Error!");
+        });
+      }
     }
   };
 

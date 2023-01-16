@@ -4,7 +4,7 @@ import { useState, useEffect, useContext } from "react";
 import { ArrowBack, FavoriteBorder, StarHalf } from "@mui/icons-material";
 import { Link, useParams, useHistory } from "react-router-dom";
 import { Container } from "@mui/material";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 
 export default function ProductDetail() {
   const { user } = useSelector((state) => ({
@@ -19,9 +19,10 @@ export default function ProductDetail() {
   const [cart, setCart] = useState([]);
   const [qtyProduct, setQtyProduct] = useState(0);
 
+
   // Mengambil data product berdasarkan ID dari backend
   const fetchProducts = () => {
-    Axios.get(`http://localhost:3300/api/product/get-product/${id}`)
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/product/get-product/${id}`)
       .then((result) => {
         setState(result.data);
         console.log("ini result data", result.data);
@@ -43,7 +44,9 @@ export default function ProductDetail() {
   // mengambil data untuk bikin kondisi add cart
 
   const getCart = () => {
-    Axios.get(`http://localhost:3300/api/cart/get-cart/${user?.customer_uid}`)
+    Axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/cart/get-cart/${user?.customer_uid}`
+    )
       .then((result) => {
         setCart(result.data);
         console.log("ini result data", result.data);
@@ -87,10 +90,14 @@ export default function ProductDetail() {
         if (qtyProduct <= 0) {
           alert("Quantity tidak boleh 0 atau kurang");
         } else {
-          Axios.post("http://localhost:3300/api/cart/add-to-cart", data)
+          Axios.post(
+            `${process.env.REACT_APP_API_BASE_URL}/cart/add-to-cart`,
+            data
+          )
             .then(() => {
               alert("Product Added!");
-              history.push(`/product-list`);
+              // history.push(`/product-list`);
+              history.push('/')
             })
             .catch((error) => {
               alert("Server Error");
@@ -105,7 +112,10 @@ export default function ProductDetail() {
         if (qtyProduct <= 0) {
           alert("Quantity tidak boleh 0 atau kurang");
         } else {
-          Axios.put(`http://localhost:3300/api/cart/edit-cart/${id}`, data)
+          Axios.put(
+            `${process.env.REACT_APP_API_BASE_URL}/cart/edit-cart/${id}`,
+            data
+          )
             .then(() => {
               alert("Quantity Added");
               history.push(`/product-list`);
@@ -129,7 +139,6 @@ export default function ProductDetail() {
 
   return (
     <div className="pd-wrap">
-
       {console.log(state, "render data")}
 
       <Container maxWidth="xs" className="container-product-detail">
@@ -139,7 +148,6 @@ export default function ProductDetail() {
           </Link>
 
           <img className="detail-img" src={state.getProduct?.picture} />
-
         </div>
         <div className="product-spec">
           <div className="product-title">
@@ -194,10 +202,14 @@ export default function ProductDetail() {
               </div>
             </div>
             <div className="spec-qty">
-              <div className="spec-qty-title">Quantity</div>
+              
               {state.getProduct?.quantity_total == 0 ? (
-                <div>Out of stock, please wait for our restock! </div>
+                <>
+                  <div>Out of stock, please wait for our restock! </div>
+                </>
               ) : (
+                <>
+                <div className="spec-qty-title">Quantity</div>
                 <div className="spec-qty-selector">
                   <span className="sub-qty-select" onClick={minQtyHandler}>
                     -
@@ -207,6 +219,7 @@ export default function ProductDetail() {
                     +
                   </span>
                 </div>
+                </>
               )}
             </div>
           </div>

@@ -1,25 +1,14 @@
 import Axios from 'axios';
 import { useEffect, useState } from 'react';
-import {
-  Add,
-  ArrowBack,
-  Remove,
-  SportsSoccerOutlined,
-  BusinessCenterOutlined,
-  DirectionsBikeOutlined,
-  HikingOutlined,
-  HandymanOutlined,
-  MonitorHeartOutlined,
-  FitnessCenterOutlined,
-} from '@mui/icons-material';
+import { Add, ArrowBack, Remove } from '@mui/icons-material';
 import { useHistory, useParams } from 'react-router-dom';
 import { Container, Button, IconButton, InputBase, Select, MenuItem, TextField } from '@mui/material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import YupPassword from 'yup-password';
 
-import '../../assets/styles/ProductDetailAdmin.css';
-import { useSelector } from 'react-redux';
+import "../../assets/styles/ProductDetailAdmin.css";
+import { useSelector } from "react-redux";
 
 export default function ProductDetailAdmin() {
   const history = useHistory();
@@ -32,20 +21,21 @@ export default function ProductDetailAdmin() {
 
   const [isEdit, setIsEdit] = useState(false);
   const [selectIcon, setSelectIcon] = useState(0);
-  const [picture, setPicture] = useState('');
-  const [preview, setPreview] = useState('');
+  const [picture, setPicture] = useState("");
+  const [preview, setPreview] = useState("");
   const [state, setState] = useState({});
   const [stateCategory, setStateCategory] = useState({});
   const [isSuperAdmin, setIsSuperAdmin] = useState(true);
 
-  const [descript, setDescript] = useState('');
+  const [descript, setDescript] = useState("");
 
   const [categoryList, setCategoryList] = useState([]);
   const [resStock, setResStock] = useState([]);
   const [refreshStock, setRefreshStock] = useState([]);
+  const [whList, setWhList] = useState([]);
   const [stockChange, SetStockChange] = useState({
-    wh_id: '',
-    count: '',
+    wh_id: "",
+    count: "",
     number: 0,
   });
 
@@ -58,44 +48,45 @@ export default function ProductDetailAdmin() {
   useEffect(() => {
     fetchProducts();
     fetchCategories();
+    getWh();
   }, [refreshStock]);
 
   // Mengambil data product berdasarkan ID dari backend
   const fetchProducts = () => {
-    Axios.get(`http://localhost:3300/api/product/get-product/${id}`)
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/product/get-product/${id}`)
       .then((result) => {
         setState(result.data.getProduct);
         setStateCategory(result.data.getProduct.category);
         setResStock(result.data.stockWh);
       })
       .catch((err) => {
-        alert('Terjadi kesalahan di server');
+        alert("Terjadi kesalahan di server");
       });
   };
 
   const fetchCategories = () => {
-    Axios.get('http://localhost:3300/api/product/get-category')
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/product/get-category`)
       .then((result) => {
         setCategoryList(result.data);
       })
       .catch((err) => {
-        alert('Terjadi kesalahan di server');
+        alert("Terjadi kesalahan di server");
       });
   };
 
   // delete button handler
   const deleteBtnHandler = () => {
-    const confirmDelete = window.confirm('Delete Product?');
+    const confirmDelete = window.confirm("Delete Product?");
     if (confirmDelete) {
-      Axios.delete(`http://localhost:3300/api/product/${id}`)
+      Axios.delete(`${process.env.REACT_APP_API_BASE_URL}/product/${id}`)
         .then(() => {
           history.push(`/products-management-list`);
         })
         .catch(() => {
-          alert('Server Error!');
+          alert("Server Error!");
         });
     } else {
-      alert('Cancel Delete Product');
+      alert("Cancel Delete Product");
     }
   };
 
@@ -111,26 +102,29 @@ export default function ProductDetailAdmin() {
   //isinialisasi formik
   const formik = useFormik({
     initialValues: {
-      name: '',
+      name: "",
       price: 0,
-      product_detail: '',
+      product_detail: "",
     },
     validationSchema: Yup.object().shape({
-      name: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!'),
-      product_detail: Yup.string().min(2, 'Too Short!').max(100, 'Too Long!'),
+      name: Yup.string().min(2, "Too Short!").max(50, "Too Long!"),
+      product_detail: Yup.string().min(2, "Too Short!").max(100, "Too Long!"),
     }),
     validateOnChange: false,
     onSubmit: async (values) => {
       const data = new FormData();
-      data.append('name', values.name);
-      data.append('price', values.price);
-      data.append('product_detail', values.product_detail);
-      data.append('category', selectIcon);
-      data.append('picture', picture);
+      data.append("name", values.name);
+      data.append("price", values.price);
+      data.append("product_detail", values.product_detail);
+      data.append("category", selectIcon);
+      data.append("picture", picture);
 
-      Axios.put(`http://localhost:3300/api/product/edit-product/${id}`, data)
+      Axios.put(
+        `${process.env.REACT_APP_API_BASE_URL}/product/edit-product/${id}`,
+        data
+      )
         .then(() => {
-          alert('Product Edited!');
+          alert("Product Edited!");
           setIsEdit(false);
         })
         .catch((error) => {
@@ -141,8 +135,8 @@ export default function ProductDetailAdmin() {
 
   const changeStock = (name, count, number, requester) => {
     if (number >= 1) {
-      Axios.patch(`http://localhost:3300/api/product/update-stock/${id}`, {
-        wh_id: name + 1,
+      Axios.patch(`${process.env.REACT_APP_API_BASE_URL}/product/update-stock/${id}`, {
+        wh_id: name,
         count: count,
         number: number,
         requester: stateUsername.user.fullname,
@@ -150,65 +144,78 @@ export default function ProductDetailAdmin() {
         .then((data) => {
           resStock[name] = data.data;
           setRefreshStock(resStock);
-          alert('Stock Updated!');
+          alert("Stock Updated!");
         })
         .catch((error) => {
-          alert('gagal');
+          alert("gagal");
         });
     } else {
-      alert('Input stock amount first!');
+      alert("Input stock amount first!");
     }
   };
 
-  const warehouseStock = (index, number) => {
-    return (
-      <div className="pdadmin-stock-wh">
-        <div className="pdadmin-stock-name">Warehouse {index + 1}</div>
-        <div className="pdadmin-stock-qty">{resStock[index]} pcs</div>
-        {isSuperAdmin ? (
-          <>
-            <div className="pdadmin-stock-edit">
-              <InputBase
-                sx={{ fontFamily: 'Lora' }}
-                placeholder="0"
-                className="pdadmin-stock-text"
-                onChange={(e) => {
-                  number = e.target.value;
-                }}
-              />
-              <IconButton
-                className="pdadmin-stock-add"
-                onClick={() => {
-                  changeStock(index, 'add', number);
-                }}>
-                <Add />
-              </IconButton>
-            </div>
-            <div className="pdadmin-stock-edit">
-              <InputBase
-                sx={{ fontFamily: 'Lora' }}
-                placeholder="0"
-                className="pdadmin-stock-text"
-                onChange={(e) => {
-                  number = e.target.value;
-                }}
-              />
-              <IconButton
-                className="pdadmin-stock-decrease"
-                onClick={() => {
-                  changeStock(index, 'reduce', number);
-                }}>
-                <Remove />
-              </IconButton>
-            </div>
-          </>
-        ) : null}
-      </div>
-    );
+  // GET WH
+  const getWh = () => {
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/product/get-wh`)
+      .then((result) => {
+        setWhList(result.data);
+      })
+      .catch((err) => {
+        alert('Terjadi kesalahan di server');
+      });
+  };
+
+  const warehouseStock = (number) => {
+    return whList.map((val, idx) => {
+      return (
+        <div className="pdadmin-stock-wh">
+          <div className="pdadmin-stock-name">Warehouse {val}</div>
+          <div className="pdadmin-stock-qty">{resStock[idx]} pcs</div>
+          {isSuperAdmin ? (
+            <>
+              <div className="pdadmin-stock-edit">
+                <InputBase
+                  sx={{ fontFamily: 'Lora' }}
+                  placeholder="0"
+                  className="pdadmin-stock-text"
+                  onChange={(e) => {
+                    number = e.target.value;
+                  }}
+                />
+                <IconButton
+                  className="pdadmin-stock-add"
+                  onClick={() => {
+                    changeStock(val, 'add', number);
+                  }}>
+                  <Add />
+                </IconButton>
+              </div>
+              <div className="pdadmin-stock-edit">
+                <InputBase
+                  sx={{ fontFamily: 'Lora' }}
+                  placeholder="0"
+                  className="pdadmin-stock-text"
+                  onChange={(e) => {
+                    number = e.target.value;
+                  }}
+                />
+                <IconButton
+                  className="pdadmin-stock-decrease"
+                  onClick={() => {
+                    changeStock(val, 'reduce', number);
+                  }}>
+                  <Remove />
+                </IconButton>
+              </div>
+            </>
+          ) : null}
+        </div>
+      );
+    });
   };
 
   return (
-    <Container maxWidth="xs" sx={{ backgroundColor: 'white' }}>
+    <Container maxWidth="xs" sx={{ backgroundColor: "white" }}>
       <div className="pdadmin-main">
         <div className="pdadmin-banner">
           <IconButton onClick={goBack}>
@@ -220,29 +227,31 @@ export default function ProductDetailAdmin() {
               <Button
                 disabled
                 sx={{
-                  borderRadius: '20px',
-                  backgroundColor: 'rgb(255,153,153,0.9)',
-                  fontSize: '8px',
-                  fontFamily: 'Lora',
-                  color: 'black',
-                  marginRight: '5px',
-                  marginLeft: '210px',
+                  borderRadius: "20px",
+                  backgroundColor: "rgb(255,153,153,0.9)",
+                  fontSize: "8px",
+                  fontFamily: "Lora",
+                  color: "black",
+                  marginRight: "5px",
+                  marginLeft: "210px",
                 }}
                 variant="contained"
-                className="pdadmin-banner-delete">
+                className="pdadmin-banner-delete"
+              >
                 Delete
               </Button>
               <Button
                 sx={{
-                  borderRadius: '20px',
-                  backgroundColor: 'rgb(153,255,255,0.9)',
-                  fontSize: '8px',
-                  fontFamily: 'Lora',
-                  color: 'black',
+                  borderRadius: "20px",
+                  backgroundColor: "rgb(153,255,255,0.9)",
+                  fontSize: "8px",
+                  fontFamily: "Lora",
+                  color: "black",
                 }}
                 variant="contained"
                 onClick={formik.handleSubmit}
-                className="pdadmin-banner-edit">
+                className="pdadmin-banner-edit"
+              >
                 Save
               </Button>
             </>
@@ -252,30 +261,32 @@ export default function ProductDetailAdmin() {
                 <>
                   <Button
                     sx={{
-                      borderRadius: '20px',
-                      backgroundColor: 'rgb(255,153,153,0.9)',
-                      fontSize: '8px',
-                      fontFamily: 'Lora',
-                      color: 'black',
-                      marginRight: '5px',
-                      marginLeft: '210px',
+                      borderRadius: "20px",
+                      backgroundColor: "rgb(255,153,153,0.9)",
+                      fontSize: "8px",
+                      fontFamily: "Lora",
+                      color: "black",
+                      marginRight: "5px",
+                      marginLeft: "210px",
                     }}
                     variant="contained"
                     onClick={deleteBtnHandler}
-                    className="pdadmin-banner-delete">
+                    className="pdadmin-banner-delete"
+                  >
                     Delete
                   </Button>
                   <Button
                     sx={{
-                      borderRadius: '20px',
-                      backgroundColor: 'rgb(255,204,153,0.9)',
-                      fontSize: '8px',
-                      fontFamily: 'Lora',
-                      color: 'black',
+                      borderRadius: "20px",
+                      backgroundColor: "rgb(255,204,153,0.9)",
+                      fontSize: "8px",
+                      fontFamily: "Lora",
+                      color: "black",
                     }}
                     variant="contained"
                     onClick={() => setIsEdit(true)}
-                    className="pdadmin-banner-edit">
+                    className="pdadmin-banner-edit"
+                  >
                     Edit
                   </Button>
                 </>
@@ -287,9 +298,20 @@ export default function ProductDetailAdmin() {
         {isEdit ? (
           <>
             <img className="pdadmin-img" src={picture} alt="" />
-            <Button variant="contained" component="label" sx={{ marginLeft: '130px', marginTop: '10px' }}>
+            <Button
+              variant="contained"
+              component="label"
+              sx={{ marginLeft: "130px", marginTop: "10px" }}
+            >
               Change Photo
-              <input hidden accept="image/*" multiple type="file" id="uploadImg" onChange={loadPicture} />
+              <input
+                hidden
+                accept="image/*"
+                multiple
+                type="file"
+                id="uploadImg"
+                onChange={loadPicture}
+              />
             </Button>
           </>
         ) : (
@@ -302,20 +324,30 @@ export default function ProductDetailAdmin() {
               <div className="pdadmin-detail-title">
                 <div className="pdadmin-desc-title-1">
                   <InputBase
-                    sx={{ fontFamily: 'Lora' }}
+                    sx={{ fontFamily: "Lora" }}
                     placeholder={state.name}
                     className="pdadmin-desc-name-input"
-                    onChange={(e) => formik.setFieldValue('name', e.target.value)}
+                    onChange={(e) =>
+                      formik.setFieldValue("name", e.target.value)
+                    }
                   />
                 </div>
-                {formik.errors.name ? <div className="alert alert-danger">{formik.errors.name}</div> : null}
+                {formik.errors.name ? (
+                  <div className="alert alert-danger">{formik.errors.name}</div>
+                ) : null}
                 <div className="pdadmin-desc-title-2-input">
                   <Select
-                    sx={{ width: '150px', height: '38px', fontSize: '12px', padding: '0px' }}
+                    sx={{
+                      width: "150px",
+                      height: "38px",
+                      fontSize: "12px",
+                      padding: "0px",
+                    }}
                     labelId="demo-simple-select-label"
                     id="demo-simple-select"
                     value={selectIcon}
-                    onChange={(e) => setSelectIcon(e.target.value)}>
+                    onChange={(e) => setSelectIcon(e.target.value)}
+                  >
                     <MenuItem value={0}>
                       <em>
                         <img src={stateCategory.picture} />
@@ -338,25 +370,31 @@ export default function ProductDetailAdmin() {
                 <div className="pdadmin-desc-1">Description</div>
                 <div className="pdadmin-desc-2">
                   <TextField
-                    sx={{ width: '100%', fontSize: '12px', padding: 0 }}
+                    sx={{ width: "100%", fontSize: "12px", padding: 0 }}
                     id="outlined-multiline-static"
                     multiline
                     rows={4}
                     placeholder={state.product_detail}
-                    onChange={(e) => formik.setFieldValue('product_detail', e.target.value)}
+                    onChange={(e) =>
+                      formik.setFieldValue("product_detail", e.target.value)
+                    }
                   />
                 </div>
               </div>
               {formik.errors.product_detail ? (
-                <div className="alert alert-danger">{formik.errors.product_detail}</div>
+                <div className="alert alert-danger">
+                  {formik.errors.product_detail}
+                </div>
               ) : null}
               <div className="pdadmin-pricing">
                 <div className="pdadmin-price-title">Price</div>
                 <div className="pdadmin-price-input">
                   <span className="pdadmin-price-input-1">$</span>
                   <InputBase
-                    sx={{ fontFamily: 'Lora', width: '100px' }}
-                    onChange={(e) => formik.setFieldValue('price', e.target.value)}
+                    sx={{ fontFamily: "Lora", width: "100px" }}
+                    onChange={(e) =>
+                      formik.setFieldValue("price", e.target.value)
+                    }
                     placeholder={state.price}
                     className="pdadmin-price-input-2"
                   />
@@ -372,10 +410,14 @@ export default function ProductDetailAdmin() {
                 <div className="pdadmin-desc-title-1">
                   <span className="pdadmin-desc-name">{state.name}</span>
                 </div>
-                <div className="pdadmin-desc-title-4">Product ID: {state.id}</div>
+                <div className="pdadmin-desc-title-4">
+                  Product ID: {state.id}
+                </div>
                 <div className="pdadmin-desc-title-2">
                   <img src={stateCategory.picture} />
-                  <div className="pdadmin-desc-title-3">{stateCategory.name}</div>
+                  <div className="pdadmin-desc-title-3">
+                    {stateCategory.name}
+                  </div>
                 </div>
               </div>
               <hr className="splitter" />
@@ -385,14 +427,14 @@ export default function ProductDetailAdmin() {
               </div>
               <div className="pdadmin-pricing">
                 <div className="pdadmin-price-title">Price</div>
-                <div className="pdadmin-price">${state.price}</div>
+                <div className="pdadmin-price">Rp. {state.price}</div>
               </div>
               <hr className="splitter" />
             </div>
           </>
         )}
 
-        <div className="pdadmin-stock">{resStock.map((item, index) => warehouseStock(index))}</div>
+        <div className="pdadmin-stock">{warehouseStock()}</div>
       </div>
     </Container>
   );

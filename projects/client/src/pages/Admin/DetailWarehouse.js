@@ -21,7 +21,7 @@ import GoogleMaps from "../../components/GoogleMaps";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 import "../../assets/styles/DetailWarehouse.css";
 import Axios from "axios";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useHistory } from "react-router-dom";
 
 function DetailWarehouse() {
   const [warehouse_name, setWarehouse_name] = useState();
@@ -34,6 +34,7 @@ function DetailWarehouse() {
   const [picture, setPicture] = useState();
   const [admin, setAdmin] = useState();
   const {id} = useParams();
+  const history = useHistory()
 
   const { isLoggedIn, user } = useSelector((state) => ({
     isLoggedIn: state.auth.isLoggedIn,
@@ -44,11 +45,15 @@ function DetailWarehouse() {
   const userData = user?.role;
   console.log(userData);
 
+  const goBack = () => {
+    history.goBack();
+  };
+
   useEffect(() => {
     if (userUID) {
       const getWarehouseById = async () => {
         const getWarehouse = await Axios.get(
-          `http://localhost:3300/api/warehouse/warehouse-list/${id}`
+          `${process.env.REACT_APP_API_BASE_URL}/warehouse/warehouse-list/${id}`
         );
         console.log(getWarehouse);
         setWarehouse_name(getWarehouse.data.warehouse_name);
@@ -59,7 +64,7 @@ function DetailWarehouse() {
         setLatitude(getWarehouse.data.latitude);
         setLongitude(getWarehouse.data.longitude);
         setPicture(getWarehouse.data.picture);
-        setAdmin(getWarehouse.data.admin)
+        setAdmin(getWarehouse.data.admin);
       };
       getWarehouseById();
     }
@@ -96,8 +101,7 @@ function DetailWarehouse() {
     <Container maxWidth="xs" sx={{ backgroundColor: "white" }}>
       <div className="detailwh-main">
         <div className="detailwh-banner">
-          <IconButton>
-            {/* onClick={this.goBack} */}
+          <IconButton onClick={goBack}>
             <ArrowBack />
           </IconButton>
           <div className="detailwh-banner-text">Warehouse Detail</div>
@@ -115,22 +119,24 @@ function DetailWarehouse() {
           >
             Delete
           </Button>
-          <Link to={`/edit-warehouse/${id}`} className="whmanagement-banner-menu-link">
-
-          <Button
-            sx={{
-              borderRadius: "20px",
-              backgroundColor: "rgb(255,204,153,0.9)",
-              fontSize: "8px",
-              fontFamily: "Lora",
-              color: "black",
-            }}
-            variant="contained"
-            // onClick={this.editHandler}
-            className="detailwh-banner-edit"
+          <Link
+            to={`/edit-warehouse/${id}`}
+            className="whmanagement-banner-menu-link"
           >
-            Edit
-          </Button>
+            <Button
+              sx={{
+                borderRadius: "20px",
+                backgroundColor: "rgb(255,204,153,0.9)",
+                fontSize: "8px",
+                fontFamily: "Lora",
+                color: "black",
+              }}
+              variant="contained"
+              // onClick={this.editHandler}
+              className="detailwh-banner-edit"
+            >
+              Edit
+            </Button>
           </Link>
         </div>
         <div className="detailwh-content">

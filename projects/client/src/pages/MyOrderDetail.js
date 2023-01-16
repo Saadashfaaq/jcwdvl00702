@@ -32,35 +32,52 @@ export default function MyOrderDetail() {
   const userData = user?.role;
   console.log(userData);
 
-  const [activeStep, setActiveStep] = useState(5);
+  const [activeStep, setActiveStep] = useState();
   const [paymentIsDone, setPaymentIsDone] = useState(false);
   const [orderDetails, setOrderDetails] = useState();
   const [orderitemDet, setOrderitemDet] = useState();
 
+  const getOrderList = async () => {
+    const response = await Axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/order/get-order-cart-product/${userUID}`
+    );
+    console.log(response?.data);
+    console.log(response?.data.orderitems, "ini orderitems");
+    setOrderDetails(response?.data);
+    setOrderitemDet(response?.data.orderitems);
+    setActiveStep(response?.data.status_detail)
+  };
+
   useEffect(() => {
-    const getOrderList = async () => {
-      const response = await Axios.get(
-        `http://localhost:3300/api/order/get-order-cart-product/${userUID}`
-      );
-      console.log(response?.data);
-      console.log(response?.data.orderitems, "ini orderitems");
-      setOrderDetails(response?.data);
-      setOrderitemDet(response?.data.orderitems);
-    };
     getOrderList();
   }, []);
 
-  const handleNext = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
-  };
+  // const handleNext = () => {
+  //   setActiveStep((prevActiveStep) => prevActiveStep + 1);
+  // };
 
-  const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
-  };
+  // const handleBack = () => {
+  //   setActiveStep((prevActiveStep) => prevActiveStep - 1);
+  // };
 
-  const handleReset = () => {
-    setActiveStep(0);
-  };
+  // const handleReset = () => {
+  //   setActiveStep(0);
+  // };
+
+  const receivedHandler = () => {
+    const data = {
+      status_detail: 4
+    }
+    Axios.put(`${process.env.REACT_APP_API_BASE_URL}/order/received/${user.customer_uid}`, data)
+    .then(() => {
+      alert("received!");
+      getOrderList()
+    })
+    .catch((error) => {
+      console.log(error);
+      alert(error);
+    });
+  }
 
   const steps = [
     {
@@ -69,11 +86,11 @@ export default function MyOrderDetail() {
     },
     {
       label: "Payment Confirmation",
-      description: "See Proof of Payment first.",
+      description: "Waiting Admin Approve Your Payment Proof",
     },
     {
       label: "In Process",
-      description: `Click "Done" only if the order is ready for shipping.`,
+      description: `Waiting Admin send Your Order`,
     },
     {
       label: "In Delivery",
@@ -81,7 +98,7 @@ export default function MyOrderDetail() {
     },
     {
       label: "Received",
-      description: `Order is received by User. Process is finished.`,
+      description: `Order is received. Process is finished.`,
     },
     // {
     //   label: 'Cancelled',
@@ -165,7 +182,6 @@ export default function MyOrderDetail() {
         </div>
         <div className="oda-step">
           <div className="oda-step-text">Order Status</div>
-
           <Box sx={{ mb: 2, fontFamily: "Lora" }}>
             <Stepper activeStep={activeStep} orientation="vertical">
               {steps.map((step, index) => (
@@ -179,7 +195,7 @@ export default function MyOrderDetail() {
                     </Typography>
                     <Box sx={{ mb: 2 }}>
                       <div>
-                        {index === 0 || index === 3 ? (
+                        {index === 0 ? (
                           <Button
                             disabled
                             sx={{
@@ -194,7 +210,7 @@ export default function MyOrderDetail() {
                         ) : null}
                         {index === 1 ? (
                           <>
-                            <Button
+                            {/* <Button
                               variant="contained"
                               onClick={handleNext}
                               sx={{
@@ -217,12 +233,12 @@ export default function MyOrderDetail() {
                               }}
                             >
                               Reject
-                            </Button>
+                            </Button> */}
                           </>
                         ) : null}
                         {index === 2 ? (
                           <>
-                            <Button
+                            {/* <Button
                               variant="contained"
                               onClick={handleNext}
                               sx={{
@@ -233,6 +249,22 @@ export default function MyOrderDetail() {
                               }}
                             >
                               Done
+                            </Button> */}
+                          </>
+                        ) : null}
+                        {index === 3 ? (
+                          <>
+                            <Button
+                              variant="contained"
+                              onClick={receivedHandler}
+                              sx={{
+                                mt: 1,
+                                mr: 1,
+                                fontFamily: "Lora",
+                                fontSize: "12px",
+                              }}
+                            >
+                              Received
                             </Button>
                           </>
                         ) : null}
@@ -256,6 +288,7 @@ export default function MyOrderDetail() {
               </Paper>
             )}
           </Box>
+
         </div>
 
         <div className="oda-payment">

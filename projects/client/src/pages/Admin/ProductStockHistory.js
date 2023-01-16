@@ -24,6 +24,7 @@ export default function ProductStockHistory() {
   const [stateCategory, setStateCategory] = useState({});
   const [getHistory, setGetHistory] = useState([]);
   const [refreshHistory, setRefreshHistory] = useState([]);
+  const [whList, setWhList] = useState([]);
 
   const [stockInitial, setStockInitial] = useState(0);
   const [increment, setIncrement] = useState(0);
@@ -32,10 +33,11 @@ export default function ProductStockHistory() {
 
   useEffect(() => {
     fetchProducts();
+    getWh();
   }, []);
 
   const fetchProducts = (year, month) => {
-    Axios.get(`http://localhost:3300/api/product/product-stock-history/${id}?year=${year}&month=${month}`)
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/product/product-stock-history/${id}?year=${year}&month=${month}`)
       .then((result) => {
         setGetProduct(result.data.getProduct);
         setStateCategory(result.data.getProduct.category);
@@ -76,6 +78,17 @@ export default function ProductStockHistory() {
         setReduction(decrement);
         setStockFinal(final);
         setRefreshHistory(getHistory);
+      })
+      .catch((err) => {
+        alert('Terjadi kesalahan di server');
+      });
+  };
+
+  // GET WH
+  const getWh = () => {
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/product/get-wh`)
+      .then((result) => {
+        setWhList(result.data);
       })
       .catch((err) => {
         alert('Terjadi kesalahan di server');
@@ -129,7 +142,7 @@ export default function ProductStockHistory() {
                 </div>
                 <div className="mhistory-detail">
                   <div className="mhistory-detail-name">Warehouse {val.warehouse_id}</div>
-                  {val.requester !== 'super_admin' ? (
+                  {val.requester !== 'superadmin' ? (
                     <>
                       <div className="mhistory-detail-name">Warehouse {val.requester}</div>
                     </>
@@ -265,15 +278,9 @@ export default function ProductStockHistory() {
                       <MenuItem value={0}>
                         <em>Location</em>
                       </MenuItem>
-                      <MenuItem value={1}>
-                        <span>Warehouse 1</span>
-                      </MenuItem>
-                      <MenuItem value={2}>
-                        <span>Warehouse 2</span>
-                      </MenuItem>
-                      <MenuItem value={3}>
-                        <span>Warehouse 3</span>
-                      </MenuItem>
+                      {whList.map((val, index) => {
+                        return <MenuItem value={whList[index]}>Warehouse {whList[index]}</MenuItem>;
+                      })}
                     </Select>
                   </>
                 ) : (

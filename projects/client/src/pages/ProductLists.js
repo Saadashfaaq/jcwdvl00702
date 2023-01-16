@@ -1,12 +1,21 @@
-import React from 'react';
-import Axios from 'axios';
-import SearchIcon from '@mui/icons-material/Search';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import '../assets/styles/ProductLists.css';
-import { SortTwoTone, SportsSoccerOutlined } from '@mui/icons-material';
-import { Container, Stack, Pagination, IconButton, InputBase, Menu, MenuItem, Button } from '@mui/material';
-import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
-import { URL_API } from '../redux/API';
+import React from "react";
+import Axios from "axios";
+import SearchIcon from "@mui/icons-material/Search";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import "../assets/styles/ProductLists.css";
+import { SortTwoTone, SportsSoccerOutlined } from "@mui/icons-material";
+import {
+  Container,
+  Stack,
+  Pagination,
+  IconButton,
+  InputBase,
+  Menu,
+  MenuItem,
+  Button,
+} from "@mui/material";
+import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
+import { URL_API } from "../redux/API";
 // import SportsSoccerOutlined from "@mui/icons-material/SportsSoccerOutlined";
 
 class ProductLists extends React.Component {
@@ -16,18 +25,19 @@ class ProductLists extends React.Component {
       dataProduct: [],
       page: 0,
       pages: 0,
-      sort: '',
-      search: '',
+      sort: "",
+      search: "",
     };
   }
 
   componentDidMount() {
     this.getDataProduct(0);
+    this.fetchCategories();
   }
 
   filterHandler = () => {
     this.fetchProducts();
-    this.setState({ ...this.state, keyWord: '' });
+    this.setState({ ...this.state, keyWord: "" });
   };
 
   inputHandler = (event) => {
@@ -50,8 +60,18 @@ class ProductLists extends React.Component {
     this.props.history.push(`/product-detail/${id}`);
   };
 
+  fetchCategories = () => {
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/product/get-category`)
+      .then((result) => {
+        this.setState({ ...this.state, categoryList: result.data });
+      })
+      .catch((err) => {
+        alert('Terjadi kesalahan di server');
+      });
+  };
+
   getDataProduct = (page, sort, search) => {
-    // Axios.get(`http://localhost:3300/api/product/get-product/?searchQuery=${this.state.keyWord}`)
+    // Axios.get(`${process.env.REACT_APP_API_BASE_URL}/product/get-product/?searchQuery=${this.state.keyWord}`)
     //   .then((result) => {
     //     this.setState({ productList: result.data, maxPage: Math.ceil(result.data.length / this.state.itemPerPage) });
     //     console.log(this.state.productList);
@@ -61,9 +81,11 @@ class ProductLists extends React.Component {
     //   });
 
     Axios.get(
-      `http://localhost:3300/api/product/get-product/?page=${page}&sort=${sort ? sort : this.state.sort}&search=${
-        search ? search : this.state.search
-      }`
+      `${
+        process.env.REACT_APP_API_BASE_URL
+      }/product/get-product/?page=${page}&sort=${
+        sort ? sort : this.state.sort
+      }&search=${search ? search : this.state.search}`
     )
       .then((res) => {
         this.setState({
@@ -96,35 +118,40 @@ class ProductLists extends React.Component {
   };
 
   renderProduct = () => {
-    const beginningIndex = (this.state.page - 1) * this.state.itemPerPage;
-    const currentData = this.state.productList.slice(beginningIndex, beginningIndex + this.state.itemPerPage);
+    // const beginningIndex = (this.state.page - 1) * this.state.itemPerPage;
+    // const currentData = this.state.productList.slice(beginningIndex, beginningIndex + this.state.itemPerPage);
 
-    return currentData.map((val) => {
+    return this.state.dataProduct.map((val, index) => {
       return (
         <div className="plc-main">
           <div className="plc-image">
-            <img src={val.picture} className="plc-product" alt="Product Image" />
+            <img
+              src={val.picture}
+              className="plc-product"
+              alt="Product Image"
+            />
           </div>
           <div className="plc-detail">
             <div className="plc-detail-name">{val.name}</div>
             <div className="plc-detail-subname">
               <div className="plc-detail-subname-1">
-                <SportsSoccerOutlined />
+                <img src={val.category?.picture} />
               </div>
-              <div className="plc-detail-subname-2">{val.category}</div>
+              <div className="plc-detail-subname-2">{val.category?.name}</div>
             </div>
             <div className="plc-detail-bottom">
               <Button
                 sx={{
-                  borderRadius: '20px',
-                  backgroundColor: 'rgb(153,255,153,0.9)',
-                  fontSize: '8px',
-                  fontFamily: 'Lora',
-                  color: 'black',
+                  borderRadius: "20px",
+                  backgroundColor: "rgb(153,255,153,0.9)",
+                  fontSize: "8px",
+                  fontFamily: "Lora",
+                  color: "black",
                 }}
                 variant="contained"
                 onClick={() => this.detailBtnHandler(val.id)}
-                className="plc-detail-bottom-delete">
+                className="plc-detail-bottom-delete"
+              >
                 Detail Product
               </Button>
             </div>
@@ -147,21 +174,26 @@ class ProductLists extends React.Component {
               <InputBase
                 sx={{ ml: 1, flex: 1 }}
                 placeholder="Search"
-                inputProps={{ 'aria-label': 'Search' }}
+                inputProps={{ "aria-label": "Search" }}
                 className="search-bar"
                 onChange={this.searchHandler}
               />
               <IconButton
                 type="button"
-                sx={{ p: '10px' }}
+                sx={{ p: "10px" }}
                 aria-label="search"
-                onClick={() => this.getDataProduct(0, '', this.state.search)}>
+                onClick={() => this.getDataProduct(0, "", this.state.search)}
+              >
                 <SearchIcon />
               </IconButton>
               <PopupState variant="popover" popupId="demo-popup-menu">
                 {(popupState) => (
                   <React.Fragment>
-                    <button className="account-button" variant="contained" {...bindTrigger(popupState)}>
+                    <button
+                      className="account-button"
+                      variant="contained"
+                      {...bindTrigger(popupState)}
+                    >
                       <IconButton>
                         <SortTwoTone />
                       </IconButton>
@@ -169,14 +201,18 @@ class ProductLists extends React.Component {
                     <Menu {...bindMenu(popupState)}>
                       <MenuItem
                         onClick={() => {
-                          this.getDataProduct(0, 'name', '');
+                          this.getDataProduct(0, "name", "");
                           this.setState({ ...this.state, page: 0 });
                         }}
-                        sx={{ fontFamily: 'Lora' }}>
+                        sx={{ fontFamily: "Lora" }}
+                      >
                         {/* <img src="https://img.icons8.com/fluency-systems-filled/22/null/sort-numeric-up.png" /> */}
                         Name
                       </MenuItem>
-                      <MenuItem onClick={() => this.getDataProduct(0, 'createdAt', '')} sx={{ fontFamily: 'Lora' }}>
+                      <MenuItem
+                        onClick={() => this.getDataProduct(0, "createdAt", "")}
+                        sx={{ fontFamily: "Lora" }}
+                      >
                         {/* <img src="https://img.icons8.com/windows/24/null/sort-numeric-up-reversed.png" /> */}
                         CreatedAt
                       </MenuItem>
@@ -192,15 +228,18 @@ class ProductLists extends React.Component {
           <Stack
             spacing={1}
             sx={{
-              width: '110%',
-              fontFamily: 'Lora',
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-around',
-            }}>
+              width: "110%",
+              fontFamily: "Lora",
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-around",
+            }}
+          >
             <Pagination
               count={this.state.pages}
-              onChange={(e, value) => this.getDataProduct(value - 1, this.state.sort, '')}
+              onChange={(e, value) =>
+                this.getDataProduct(value - 1, this.state.sort, "")
+              }
             />
           </Stack>
         </Container>

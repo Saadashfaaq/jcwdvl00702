@@ -20,9 +20,7 @@ import "react-slideshow-image/dist/styles.css";
 import "../assets/styles/ProductLists.css";
 import { Tooltip, Menu, MenuItem, Button, Container } from "@mui/material";
 import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
-import firebase from "firebase";
-import { AuthContext } from "../context/AuthProvider";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { firebaseAuthentication } from "../config/firebase";
 import { Login } from "@mui/icons-material";
 import { useDispatch, useSelector } from "react-redux";
@@ -32,15 +30,26 @@ import Axios from "axios";
 
 export default function HomeFunc() {
   const [productShow, setProductShow] = useState([]);
+  const [page,setPage]=useState(1)
+  const [maxPage,setMaxPage]=useState(0)
+  const [itemsPerPage,setItemsPerPage]=useState(2)
   const dispatch = useDispatch();
   let history = useHistory();
+  const verifiedCheck = firebaseAuthentication.currentUser?.emailVerified
 
   const { isLoggedIn, user } = useSelector((state) => ({
     isLoggedIn: state.auth.isLoggedIn,
     user: state.auth.user,
   }));
   const userUID = user?.customer_uid;
-  console.log(user);
+
+  const verifyCheck=()=>{
+    if(isLoggedIn){
+      if(!verifiedCheck){
+        return <div className="font-name2">Please Verify Your Account</div>
+      }
+    }
+  }
 
   const handleLogout = () => {
     firebaseAuthentication
@@ -67,56 +76,28 @@ export default function HomeFunc() {
     },
   ];
 
-  const ListProducts = [
-    {
-      image:
-        "https://dks.scene7.com/is/image/GolfGalaxy/22ADIUWC2022CMP5XSCB_White_Pantone?qlt=70&wid=600&fmt=pjpeg",
-      description: "Ball",
-      price: "900.000",
-    },
-    {
-      image: "https://cf.shopee.co.id/file/d7622a165c1b915b19e63e1ebd246ba4",
-      description: "Adidas Bag",
-      price: "300.000",
-    },
-    {
-      image:
-        "https://www.wilson.com/en-us/media/catalog/product/W/T/WTB7500ID__b722ae318490e0f2e686864dc70fd730.png",
-      description: "Wilson Basketball",
-      price: "400.000",
-    },
-    {
-      image:
-        "https://id.brompton.com/-/media/sections/my22/ux-project/cutout-bikes/c-line/c-line-659x437.ashx?h=437&w=659&la=id-ID&hash=D96DD87397FB04775257AD8C1814A20B",
-      description: "Brompton Bicycle",
-      price: "65.000.000",
-    },
-    {
-      image:
-        "https://cdn.eraspace.com/pub/media/catalog/product/a/p/apple_watch_series_7_41mm_midnight_sport_band_1_1.jpg",
-      description: "Apple Watch Series 7",
-      price: "7.000.000",
-    },
-    {
-      image: "https://m.media-amazon.com/images/I/31sjSruHyIL._AC_SY1000_.jpg",
-      description: "Ball Pump",
-      price: "150.000",
-    },
-    {
-      image:
-        "https://static.nike.com/a/images/c_limit,w_592,f_auto/t_product_v1/a48c5834-daa2-4ef6-b04d-19a04fcda866/heritage-backpack-cPq0Vl.png",
-      description: "Nike Bag",
-      price: "299.000",
-    },
-  ];
-
   const showProducts = () => {
-    Axios.get(`http://localhost:3300/api/product/home-product`).then((res) => {
+    Axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/product/home-product`
+    ).then((res) => {
       let homeProducts = res.data;
       setProductShow(homeProducts);
-      console.log(homeProducts);
+      const newMaxPage = Math.ceil(homeProducts.length/itemsPerPage)
+      setMaxPage(newMaxPage)
     });
   };
+
+  const nextPageHandler=()=>{
+    if(page<maxPage){
+      setPage(page+1)
+    }
+  }
+
+  const prevPageHandler=()=>{
+    if(page>1){
+      setPage(page-1)
+    }
+  }
 
   const cartBtnHandler = (id) => {
     if (id) {
@@ -126,10 +107,29 @@ export default function HomeFunc() {
     }
   };
 
-
   useEffect(() => {
-    showProducts();
+    // getUser()
+    showProducts()
   }, []);
+
+  const renderProducts=()=>{
+    const beginningIndex = (page-1)*itemsPerPage
+    const slicedData = productShow.slice(beginningIndex,beginningIndex+itemsPerPage)
+
+    return slicedData.map(val=>{
+      return(
+        <div>
+          <button onClick={() => detailHandler(val.id)}>
+            <div className="product-list">
+              <img src={val.picture} />
+              <div>{val.name}</div>
+              <div>IDR {val.price}</div>
+            </div>
+          </button>
+        </div>
+      )
+    })
+  }
 
   return (
     <>
@@ -202,10 +202,12 @@ export default function HomeFunc() {
             <div className="name-bar">
               <div className="font-size">Welcome</div>
               <div className="font-name">
-                {isLoggedIn ? `${user?.fullname} as ${user?.role}` : "Guest"}
+                {isLoggedIn ? `${user?.fullname}` : "Guest"}
               </div>
+              {verifyCheck()}
             </div>
             <div className="cart-icon">
+              {isLoggedIn ? null : <div className="login-text">Login</div>}
               <Link
                 to="/sign-in"
                 onClick={isLoggedIn ? (event) => event.preventDefault() : null}
@@ -217,7 +219,7 @@ export default function HomeFunc() {
               <IconButton>
                 <NotificationsOutlinedIcon />
               </IconButton>
-              <IconButton onClick={() => cartBtnHandler(userUID)}>
+              <IconButton disabled={!verifiedCheck || !user} onClick={() => cartBtnHandler(userUID)}>
                 <ShoppingCartOutlinedIcon />
               </IconButton>
             </div>
@@ -242,7 +244,7 @@ export default function HomeFunc() {
               ))}
             </Slide>
           </div>
-          <div className="button-category">
+          {/* <div className="button-category">
             <div className="button-category2">
               <button className="button-categories">
                 <SportsSoccerOutlinedIcon />
@@ -273,22 +275,19 @@ export default function HomeFunc() {
               </button>
               <div>Accessories</div>
             </div>
-          </div>
+          </div> */}
+          {/* <div className="app-name">LE SPORTY ! Good Gears Equal Healthy Body !</div> */}
           <div className="product-card">
-            {productShow
-              ? productShow.map((items) => (
-                  <div>
-                    <button onClick={() => detailHandler(items.id)}>
-                      <div className="product-list">
-                        <img src={items.picture} />
-                        <div>{items.product_detail}</div>
-                        <div>{items.price}</div>
-                      </div>
-                    </button>
-                  </div>
-                ))
-              : null}
-
+            {renderProducts()}
+          </div>
+          <div className='pagination-wrapper'>
+              <button className='button-page' onClick={prevPageHandler}>
+                {"<"}
+              </button>
+              <div className='page-numbering'>{page} of {maxPage}</div>
+              <button className='button-page' onClick={nextPageHandler}>
+                {">"}
+              </button>
           </div>
         </div>
       </Container>

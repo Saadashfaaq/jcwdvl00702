@@ -9,17 +9,11 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import Container from "@mui/material/Container";
-import { Link } from "react-router-dom";
-import { AuthContext } from "../context/AuthProvider";
+import { Link, useHistory } from "react-router-dom";
 import Axios from "axios";
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { shallowEqual, useDispatch, useSelector } from "react-redux";
 
 function Profile() {
-  // const { user: currentUser } = useContext(AuthContext);
-  //  console.log(currentUser);
-  // const user = currentUser?.uid;
-  // console.log(user);
-
   const { isLoggedIn, user } = useSelector(
     (state) => ({
       isLoggedIn: state.auth.isLoggedIn,
@@ -27,18 +21,19 @@ function Profile() {
     }),
   );
   const userUID = user?.customer_uid
-  console.log(user)
+  const profileData = user
 
   const [fullname, setFullname] = useState("");
   const [picture, setPicture] = useState("");
   const [email, setEmail] = useState("");
+  const history = useHistory();
 
   useEffect(() => {
     console.log(userUID, "useeffect check");
     if (userUID) {
       const getUserById = async (userUID) => {
         const response = await Axios.get(
-          `http://localhost:3300/api/customer/profile/${userUID}`
+          `${process.env.REACT_APP_API_BASE_URL}/customer/profile/${userUID}`
         );
         console.log(JSON.stringify(response));
         setPicture(response.data.picture);
@@ -48,11 +43,20 @@ function Profile() {
       getUserById(userUID);
     }
   }, [userUID]);
+
+  const btnHandler=()=>{
+    history.push('/change-password')
+  }
+
+  const goBack = () => {
+    history.goBack();
+  };
+
   return (
     <Container maxWidth="xs">
       <div className="profilePage">
         <div className="backPage">
-          <ArrowBackIcon /> Homepage
+          <ArrowBackIcon onClick={goBack} /> Homepage
         </div>
         <div className="profilePic">
           <img className="profileUserImg" src={picture} alt="" />
@@ -72,30 +76,21 @@ function Profile() {
           </div>
         </div>
         <div className="profileOption">
-          <Link to={`/edit-profile/${userUID}`}>
+          <Link to={`/edit-profile/${userUID}`} style={{ textDecoration: 'none' }}>
             <button className="optionBtn">
               <EditIcon />
               <span className="optionBtnText">Edit Profile</span>
               <ArrowForwardIosIcon />
             </button>
           </Link>
-          <Link to="/change-password">
-            <button className="optionBtn">
+          
+          <Link to="/change-password" style={{ textDecoration: 'none' }}>
+            <button className="optionBtn" disabled={profileData?.social_login==true} onClick={btnHandler}>
               <EditIcon />
               <span className="optionBtnText">Edit Password</span>
               <ArrowForwardIosIcon />
             </button>
           </Link>
-          <button className="optionBtn">
-            <ShoppingCartIcon />
-            <span className="optionBtnText">Your Cart</span>
-            <ArrowForwardIosIcon />
-          </button>
-          <button className="optionBtn">
-            <LocationOnIcon />
-            <span className="optionBtnText">address List</span>
-            <ArrowForwardIosIcon />
-          </button>
         </div>
       </div>
     </Container>

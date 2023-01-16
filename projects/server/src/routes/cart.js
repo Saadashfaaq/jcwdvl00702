@@ -45,10 +45,28 @@ router.delete("/delete-cart-customer/:id", async (req, res) => {
   try {
     console.log("ini id", req.params.id);
 
-    const customer_uid = req.params.id;
+    const id = req.params.id;
     const deleteCart = await Cart.destroy({
       where: {
-        customer_uid,
+        id,
+      },
+    });
+    res.status(200).json(deleteCart);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+//delete semua cart user
+
+router.delete("/delete-all-cart/:id", async (req, res) => {
+  try {
+    console.log("ini uid", req.params.id);
+
+    const id = req.params.id;
+    const deleteCart = await Cart.destroy({
+      where: {
+        customer_uid: id,
       },
     });
     res.status(200).json(deleteCart);
@@ -118,7 +136,7 @@ router.get("/get-cart-product/:id", async (req, res) => {
     for (let i = 0; i < getProduct.length; i++) {
       let picPathArray = getProduct[i].product.picture.split("\\");
       let picPath =
-        "http://localhost:3300/" + picPathArray[1] + "/" + picPathArray[2];
+        "http://localhost:8000/" + picPathArray[1] + "/" + picPathArray[2];
       getProduct[i].product.picture = picPath;
     }
 

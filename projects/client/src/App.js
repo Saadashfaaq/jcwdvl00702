@@ -28,7 +28,6 @@ import ResetPassword from './pages/Auth/PasswordChange/ResetPassword';
 import Profile from './pages/Profile';
 import EditProfile from './pages/EditProfile';
 import Footer from './components/Footer';
-import HomePage from './pages/HomePage';
 import ProductLists from './pages/ProductLists';
 import ChooseShipping from './pages/ChooseShipping';
 import AddressList from './pages/AddressList';
@@ -38,14 +37,11 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Payment from './pages/Payment';
 import EditWarehouse from './pages/Admin/EditWarehouse';
-import HomeFunc from './pages/HomeFunc';
 import Main from './pages/Main';
-import { AuthProvider } from './context/AuthProvider';
-import { ToastContainer } from 'react-toastify';
+import Reconfirm from './pages/Admin/Reconfirm';
 import { useEffect } from 'react';
 import { firebaseAuthentication } from './config/firebase';
 import { useDispatch, useSelector } from 'react-redux';
-import { useState } from 'react';
 import { loginUser } from './redux/actionCreators/authActionCreators';
 import Axios from 'axios';
 
@@ -58,9 +54,11 @@ export default function App() {
         user: user.providerData[0],
         id: user.uid,
       };
-      Axios.get(`http://localhost:3300/api/admin/get-user-one/${data.id}`)
+      console.log(data.id);
+      Axios.get(`${process.env.REACT_APP_API_BASE_URL}/admin/get-user-one/${data.id}`)
         .then((res) => {
           const getRes = res.data;
+          console.log('get res', getRes);
           const dataPersist = {
             user: getRes.result,
             id: getRes.result.customer_uid,
@@ -71,7 +69,6 @@ export default function App() {
           console.log(error);
           alert(error);
         });
-      dispatch(loginUser(data));
     });
   }, []);
 
@@ -94,7 +91,7 @@ export default function App() {
         <Route path="/dashboard">{mainUser?.role == 'user' ? <Redirect to="/" /> : <Dashboard />}</Route>
         <Route component={Dashboard} path="/dashboard" />
         <Route component={UserList} path="/user-list" />
-        <Route component={DetailUser} path="/detail-user" />
+        <Route component={DetailUser} path="/detail-user/:id" />
         <Route component={AddUser} path="/add-user" />
         <Route component={ProductCategory} path="/products-management-category" />
         <Route component={ProductListAdmin} path="/products-management-list" />
@@ -123,6 +120,7 @@ export default function App() {
         <Route component={Cart} path="/cart/:id" />
         <Route component={Checkout} path="/checkout/:id/:orderId" />
         <Route component={Payment} path="/payment/:id/:orderId" />
+        <Route component={Reconfirm} path="/reconfirm-admin" />
         <Route component={Main} path="/" />
       </Switch>
       <Footer />

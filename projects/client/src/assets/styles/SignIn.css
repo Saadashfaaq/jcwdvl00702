@@ -180,9 +180,10 @@ body {
   color: black;
 }
 
-alert.alert-danger {
+.alert-danger {
   color: rgba(114, 28, 36,1);
-  font-size: 20px;
+  font-size: 12px;
   font-weight: 600;
-  align-self:center
+  align-self:left;
+  margin-top: 10px;
 }

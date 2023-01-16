@@ -22,40 +22,57 @@ import GoogleMaps from "../../components/GoogleMaps";
 import Axios from "axios";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 import "../../assets/styles/AddWarehouse.css";
+import { useHistory } from 'react-router-dom';
+
 function AddWarehouse() {
   const [provinces, setProvinces] = useState();
   const [cities, setCities] = useState();
   const [postals, setPostals] = useState();
-  // const { user: currentUser } = useContext(AuthContext);
   const [warehouse_name, setWarehouse_name] = useState();
   const [warehouse_address, setWarehouse_address] = useState();
   const [province, setProvince] = useState();
   const [latitude, setLatitude] = useState();
   const [longitude, setLongitude] = useState();
   const [city, setCity] = useState();
-  const [cityData, setCityData] = useState()
-  const [city_id, setCity_id] = useState()
+  const [cityData, setCityData] = useState();
+  const [city_id, setCity_id] = useState();
   const [postal_code, setPostal_code] = useState();
   const [picture, setPicture] = useState();
   const [admin, setAdmin] = useState();
   const [preview, setPreview] = useState("");
   const [dataCity, setDataCity] = useState()
-  //  console.log(currentUser);
-  // const userUID = currentUser?.uid;
-  // console.log(userUID);
+  const [userStore,setUserStore] = useState()
+  const [adminStore,setAdminStore] = useState()
+
+  let history = useHistory();
 
   const { isLoggedIn, user } = useSelector((state) => ({
     isLoggedIn: state.auth.isLoggedIn,
     user: state.auth.user,
   }));
   const userUID = user?.customer_uid;
-  console.log(userUID);
+
+  const getAllUser=()=>{
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/admin/get-user`)
+    .then(res=>{
+      const getUser = res.data.allUser
+      const newArr = getUser.filter(filtered=>{
+        return filtered.approle.role.includes("adminTBA")
+      })
+      setUserStore(getUser)
+      setAdminStore(newArr)
+    })
+  }
+  
+  useEffect(()=>{
+    getAllUser()
+  },[])
 
   useEffect(() => {
     const provinceDetails = async () => {
       try {
         const response = await Axios.get(
-          "http://localhost:3300/api/warehouse/provinces"
+          `${process.env.REACT_APP_API_BASE_URL}/warehouse/provinces`
         );
         let provincesArr = JSON.parse(response.data);
         setProvinces(provincesArr);
@@ -70,7 +87,7 @@ function AddWarehouse() {
     const locationDetail = async () => {
       try {
         const response = await Axios.get(
-          "http://localhost:3300/api/warehouse/cities"
+          `${process.env.REACT_APP_API_BASE_URL}/warehouse/cities`
         );
         let citiesArr = JSON.parse(response.data);
         setCities(citiesArr);
@@ -85,7 +102,7 @@ function AddWarehouse() {
     const postalsDetail = async () => {
       try {
         const response = await Axios.get(
-          "http://localhost:3300/api/warehouse/postal-code"
+          `${process.env.REACT_APP_API_BASE_URL}/warehouse/postal-code`
         );
         let postalsArr = JSON.parse(response.data);
         setPostals(postalsArr);
@@ -100,7 +117,7 @@ function AddWarehouse() {
     if (userUID) {
       const getUserById = async (userUID) => {
         const getId = await Axios.get(
-          `http://localhost:3300/api/customer/user/${userUID}`
+          `${process.env.REACT_APP_API_BASE_URL}/customer/user/${userUID}`
         );
         console.log(getId);
       };
@@ -118,17 +135,18 @@ function AddWarehouse() {
     setCityData(e)
     const splitCity = cityData.split(" ")
     let cityName = ""
+    let cityArr = []
     if(splitCity.length>2){
       for(let x=0;x<(splitCity.length-1);x++){
-        cityName = cityName + splitCity[x] + " "
+        cityArr.push(splitCity[x])
       }
+      cityName = cityArr.join(" ")
       setCity(cityName)
-      console.log(city)
     } else {
-      setCity(splitCity[0])
+      setCity(splitCity[0]);
     }
-    setCity_id(splitCity[splitCity.length-1])
-  }
+    setCity_id(splitCity[splitCity.length - 1]);
+  };
 
   const postLatLong = async () => {
     const data = {
@@ -136,7 +154,7 @@ function AddWarehouse() {
     };
     try {
       const response = await Axios.post(
-        "http://localhost:3300/api/warehouse/lat-long",
+        `${process.env.REACT_APP_API_BASE_URL}/warehouse/lat-long`,
         data
       );
       console.log(response, "latlong");
@@ -150,7 +168,7 @@ function AddWarehouse() {
 
   const addWarehouse = async (e) => {
     e.preventDefault();
-    
+
     const formData = new FormData();
     formData.append("warehouse_name", warehouse_name);
     formData.append("warehouse_address", warehouse_address);
@@ -161,18 +179,25 @@ function AddWarehouse() {
     formData.append("longitude", longitude);
     formData.append("picture", picture);
     formData.append("admin", admin);
-    formData.append("city_id", city_id)
+    formData.append("city_id", city_id);
     try {
-      await Axios.post(
-        `http://localhost:3300/api/warehouse/add-new-warehouse`,
+      const updateWH = await Axios.post(
+        `${process.env.REACT_APP_API_BASE_URL}/warehouse/add-new-warehouse`,
         formData,
         {
           headers: {
             "Content-type": "multipart/form-data",
           },
         }
-      );
+      )
+      console.log(updateWH.data)
+      const adminWH = await Axios.put(`${process.env.REACT_APP_API_BASE_URL}/customer/update-role/${admin}`,{
+        warehouse_id:updateWH.data.id,
+        role:"admin_wh"
+      })
+      console.log(adminWH.data)
       alert("Berhasil");
+      history.push("/")
     } catch (error) {
       console.log(error);
     }
@@ -191,6 +216,7 @@ function AddWarehouse() {
 
   return (
     <Container maxWidth="xs" className="mobile">
+      {console.log('all admin', adminStore)}
       <div className="addwh-main">
         <div className="addwh-banner">
           <IconButton>
@@ -399,20 +425,19 @@ function AddWarehouse() {
               id="select-city"
               helperText="Select Admin"
               onChange={(e) => setAdmin(e.target.value)}
+              // onclick={getApprole}
               value={admin}
             >
-              <MenuItem key="Dean Febrius" value="Dean Febrius">
-                Dean Febrius
-              </MenuItem>
-              <MenuItem key="Chosua Glen" value="Chosua Glen">
-                Chosua Glen
-              </MenuItem>
-              <MenuItem key="Maria Marcelinus" value="Maria Marcelinus">
-                Maria Marcelinus
-              </MenuItem>
-              <MenuItem key="Reynaldi Septian" value="Reynaldi Septian">
-                Reynaldi Septian
-              </MenuItem>
+              {adminStore?.map((x)=>{
+                return(
+                  <MenuItem
+                  key={x.fullname}
+                  value={x.approle.customer_uid}
+                  >
+                    {x.fullname}
+                  </MenuItem>
+                )
+              })}
             </TextField>
           </FormControl>
         </div>

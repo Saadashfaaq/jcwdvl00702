@@ -1,7 +1,7 @@
 import "../../../assets/styles/passwordChange.css";
 import { useState, useEffect, useRef } from "react";
 import { ArrowBack, Email } from "@mui/icons-material";
-import { Link } from "react-router-dom";
+import { Link, Redirect } from "react-router-dom";
 import { Container } from "@mui/material";
 import { firebaseAuthentication } from "../../../config/firebase";
 import {useHistory} from "react-router-dom"
@@ -19,8 +19,6 @@ export default function ChangePassword() {
     isLoggedIn: state.auth.isLoggedIn,
     user: state.auth.user,
   }));
-  const userUID = user?.customer_uid;
-  console.log(user);
 
   // Minimum eight characters, at least one letter, one number and one special character
   const passwordRules = "^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$" 
@@ -36,7 +34,7 @@ export default function ChangePassword() {
     }),
     validateOnChange:false,
     onSubmit:async(values)=>{
-      if(values.email == user.email && user.providerData[0].providerId === 'password'){
+      if(values.email == user.email){
         firebaseAuthentication.sendPasswordResetEmail(values.email)
         .then(()=>{
           alert('Check Email to Change Password')
@@ -54,6 +52,7 @@ export default function ChangePassword() {
   return (
     <div className="password-wrap">
       <Container maxWidth="xs" className="password-container">
+        {user?.social_login==true ? <Redirect to="/"/> : null}
         <div className="changepass-wrapper">
           <div className="changepass-topside">
             <div className="changepass-title">
@@ -82,13 +81,13 @@ export default function ChangePassword() {
               <input
                 placeholder="Email"
                 className="reset-input"
-                // onChange={(e) => formik.setFieldValue("email", e.target.value)}
+                onChange={(e) => formik.setFieldValue("email", e.target.value)}
               />
             </div>
             <div className="changepass-button">
               <Link to="/reset-password">
                 <button className="changepass-continue" 
-                  // onClick={formik.handleSubmit}
+                  onClick={formik.handleSubmit}
                 >
                   Send
                 </button>

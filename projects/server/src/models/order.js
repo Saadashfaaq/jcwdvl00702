@@ -18,6 +18,10 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         type: DataTypes.BOOLEAN,
       },
+      status_detail: {
+        allowNull: false,
+        type: DataTypes.INTEGER,
+      },
       total_price: {
         allowNull: false,
         type: DataTypes.INTEGER,
@@ -35,6 +39,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
       },
       payment_picture: {
+        allowNull: false,
+        type: DataTypes.STRING,
+      },
+      warehouse_id: {
         allowNull: false,
         type: DataTypes.STRING,
       },

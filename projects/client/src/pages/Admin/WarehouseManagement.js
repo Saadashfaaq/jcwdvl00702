@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   InputAdornment,
@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { MoreHoriz, Search, AddBusiness, Warehouse } from "@mui/icons-material";
 import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
-import { shallowEqual, useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { Link, Redirect } from "react-router-dom";
 import Axios from "axios";
 import "../../assets/styles/WarehouseManagement.css";
@@ -23,39 +23,50 @@ function WarehouseManagement() {
     isLoggedIn: state.auth.isLoggedIn,
     user: state.auth.user,
   }));
-  const userUID = user?.customer_uid;
-  console.log(user);
-  const userData = user?.role;
-  console.log(userData);
 
   const [WarehouseDetails, setWarehouseDetails] = useState();
+  const [adminRole,setAdminRole] = useState()
+  const [adminData,setAdminData] = useState()
+
+  const userCheck=()=>{
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/customer/profile/${user?.customer_uid}`)
+    .then(res=>{
+      setAdminRole(res.data.approle.role)
+      setAdminData(res.data)
+    })
+    .catch(err=>{
+      console.log(err)
+    })
+  }
+
+  useEffect(()=>{
+    userCheck()
+  },[])
 
   useEffect(() => {
-    if (userUID) {
-      const getWarehouseList = async () => {
-        const response = await Axios.get(
-          `http://localhost:3300/api/warehouse/warehouse-list`
-        );
-        console.log(response.data)
-        setWarehouseDetails(response.data);
-      };
-      getWarehouseList();
-    }
+    getWarehouseList();
   }, []);
-  // state = {
-  //   isSearch: false,
-  // };
 
-  // isSearchHandle = () => {
-  //   this.setState({ ...this.state, isSearch: true });
-  // };
+  const getWarehouseList = async () => {
+    const response = await Axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/warehouse/warehouse-list`
+    );
+    console.log(response.data);
+    setWarehouseDetails(response.data);
+  };
 
-  // isSearchHandleClose = () => {
-  //   this.setState({ ...this.state, isSearch: false });
-  // };
+  const deleteWarehouse = (id) => {
+    Axios.delete(`${process.env.REACT_APP_API_BASE_URL}/warehouse/delete-warehouse/${id}`)
+      .then(() => {
+        alert("Warehouse Deleted");
+        getWarehouseList();
+      })
+      .catch((error) => {
+        alert(error);
+      });
+  };
 
   const menuHandler = () => {
-    
     return (
       <PopupState variant="popover" popupId="demo-popup-menu">
         {(popupState) => (
@@ -71,7 +82,7 @@ function WarehouseManagement() {
             </button>
             <Menu {...bindMenu(popupState)}>
               <MenuItem>
-                <Link to="/dashboard" className="whmanagement-banner-menu-link">
+                <Link to="/" className="whmanagement-banner-menu-link">
                   Dashboard
                 </Link>
               </MenuItem>
@@ -82,8 +93,8 @@ function WarehouseManagement() {
               </MenuItem>
               <MenuItem>
                 <Link
-                  to="/warehouse-management"
-                  className="whmanagement-banner-menu-link"
+                to="/warehouse-management"
+                className="whmanagement-banner-menu-link"
                 >
                   Warehouse Mng.
                 </Link>
@@ -145,9 +156,8 @@ function WarehouseManagement() {
 
   return (
     <>
-      {userData === "admin" ? (
+      {user?.approle?.role !== "user" ? (
         <Container maxWidth="xs" sx={{ backgroundColor: "white" }}>
-          {console.log(WarehouseDetails)}
           <div className="whmanagement-main">
             <div className="whmanagement-banner">
               <div className="whmanagement-banner-logo">
@@ -191,11 +201,17 @@ function WarehouseManagement() {
               </div>
 
               <div className="whmanagement-banner-add">
-                <Link to="/add-warehouse">
-                  <IconButton>
+                {adminData?.approle?.role === "superadmin" ? (
+                  <Link to="/add-warehouse">
+                    <IconButton>
+                      <AddBusiness />
+                    </IconButton>
+                  </Link>
+                ) : (
+                  <IconButton disabled>
                     <AddBusiness />
                   </IconButton>
-                </Link>
+                )}
               </div>
               <div className="whmanagement-banner-menu">{menuHandler()}</div>
             </div>
@@ -203,8 +219,8 @@ function WarehouseManagement() {
               {/* {this.whManagementCard("A")}
             {this.whManagementCard("B")}
             {this.whManagementCard("C")} */}
-                {WarehouseDetails?.map((WarehouseDetail) => (
-                  <>
+              {WarehouseDetails?.map((WarehouseDetail) => (
+                <>
                   <div className="wmc-main">
                     <div className="wmc-image">
                       <img
@@ -214,7 +230,9 @@ function WarehouseManagement() {
                       />
                     </div>
                     <div className="wmc-detail">
-                      <div className="wmc-detail-name">{WarehouseDetail.warehouse_name}</div>
+                      <div className="wmc-detail-name">
+                        {WarehouseDetail.warehouse_name}
+                      </div>
                       <div className="wmc-detail-subname">
                         Admin: {WarehouseDetail.admin}
                       </div>
@@ -222,7 +240,8 @@ function WarehouseManagement() {
                         {WarehouseDetail.warehouse_address}
                       </div>
                       <div className="wmc-detail-bottom">
-                        <Button
+                        {user?.approle?.role === 'superadmin' ? 
+                          <Button
                           sx={{
                             borderRadius: "20px",
                             backgroundColor: "rgb(255,153,153,0.9)",
@@ -230,35 +249,78 @@ function WarehouseManagement() {
                             fontFamily: "Lora",
                             color: "black",
                           }}
+                          onClick={() => deleteWarehouse(WarehouseDetail.id)}
                           variant="contained"
                           className="wmc-detail-bottom-delete"
-                        >
-                          Delete
-                        </Button>
-                        <Link
-                          to={`/detail-warehouse/${WarehouseDetail.id}`}
-                          className="whmanagement-banner-menu-link"
-                        >
-                          <Button
-                            sx={{
-                              borderRadius: "20px",
-                              backgroundColor: "rgb(153,255,153,0.9)",
-                              fontSize: "8px",
-                              fontFamily: "Lora",
-                              color: "black",
-                            }}
-                            variant="contained"
-                            className="wmc-detail-bottom-detail"
+                          // disabled={adminRole !== "superadmin"}
                           >
-                            Detail
+                            Delete
                           </Button>
-                        </Link>
+                          :
+                          <Button
+                          sx={{
+                            borderRadius: "20px",
+                            backgroundColor: "rgb(255,153,153,0.9)",
+                            fontSize: "8px",
+                            fontFamily: "Lora",
+                            color: "black",
+                          }}
+                          onClick={() => deleteWarehouse(WarehouseDetail.id)}
+                          variant="contained"
+                          className="wmc-detail-bottom-delete"
+                          disabled
+                          >
+                            Delete
+                          </Button>
+                        }
+                        {/* {adminData?.approle?.warehouse_id ===
+                        WarehouseDetail.id ? ( */}
+                        {user?.approle?.role === 'superadmin' ? (
+                          <Link
+                            to={`/detail-warehouse/${WarehouseDetail.id}`}
+                            className="whmanagement-banner-menu-link"
+                          >
+                            <Button
+                              sx={{
+                                borderRadius: "20px",
+                                backgroundColor: "rgb(153,255,153,0.9)",
+                                fontSize: "8px",
+                                fontFamily: "Lora",
+                                color: "black",
+                              }}
+                              variant="contained"
+                              className="wmc-detail-bottom-detail"
+                            >
+                              Detail
+                            </Button>
+                          </Link>
+                        ) : (
+                          <Link
+                            to={`/detail-warehouse/${WarehouseDetail.id}`}
+                            className="whdetail-disabled"
+                          >
+                            <Button
+                              sx={{
+                                borderRadius: "20px",
+                                backgroundColor: "rgb(153,255,153,0.9)",
+                                fontSize: "8px",
+                                fontFamily: "Lora",
+                                color: "black",
+                              }}
+                              variant="contained"
+                              className="wmc-detail-bottom-detail"
+                              disabled={adminRole !== "superadmin"}
+                            >
+                              Detail
+                            </Button>
+                          </Link>
+                        )}
                       </div>
                     </div>
                   </div>
-                  </>
-                ))}
-              <Stack
+                </>
+              ))}
+              {/* <Stack
                 spacing={1}
                 sx={{
                   position: "fixed",
@@ -268,7 +330,7 @@ function WarehouseManagement() {
                 }}
               >
                 <Pagination count={10} />
-              </Stack>
+              </Stack> */}
             </div>
           </div>
         </Container>

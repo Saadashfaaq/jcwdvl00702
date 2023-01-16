@@ -1,4 +1,5 @@
 import React from 'react';
+import Axios from 'axios'
 import { IconButton, Container, Avatar, Menu, MenuItem } from '@mui/material';
 import {
   AccountBox,
@@ -19,10 +20,13 @@ import { Link } from 'react-router-dom';
 import '../../assets/styles/Dashboard.css';
 import { logoutUser } from '../../redux/actionCreators/authActionCreators';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { useState, useEffect } from "react";
 import { firebaseAuthentication } from '../../config/firebase';
 
 export default function Dashboard() {
   const dispatch = useDispatch();
+
+  const [roleTest,setRoleTest]=useState()
 
   const { isLoggedIn, user } = useSelector(
     (state) => ({
@@ -31,7 +35,21 @@ export default function Dashboard() {
     }),
     shallowEqual
   );
-  console.log(user.customer_uid);
+  
+  const userCheck=()=>{
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/customer/profile/${user?.customer_uid}`)
+    .then(res=>{
+      console.log(res.data)
+      setRoleTest(res.data)
+    })
+    .catch(err=>{
+      console.log(err)
+    })
+  }
+
+  useEffect(()=>{
+    userCheck()
+  },[])
 
   const handleLogout = () => {
     firebaseAuthentication
@@ -58,7 +76,7 @@ export default function Dashboard() {
             </button>
             <Menu {...bindMenu(popupState)}>
               <MenuItem>
-                <Link to="/dashboard" className="userlist-banner-menu-link">
+                <Link to="/" className="userlist-banner-menu-link">
                   Dashboard
                 </Link>
               </MenuItem>
@@ -125,10 +143,10 @@ export default function Dashboard() {
                     </IconButton>
                   </button>
                   <Menu {...bindMenu(popupState)}>
-                    <MenuItem onClick={popupState.close}>
+                    {/* <MenuItem onClick={popupState.close}>
                       <AccountBox />
                       Profile
-                    </MenuItem>
+                    </MenuItem> */}
                     <MenuItem onClick={popupState.close}>
                     <button className="logout-btn" onClick={handleLogout}>
                             <div className="logout-wrapper">
@@ -145,7 +163,8 @@ export default function Dashboard() {
             </PopupState>
           </div>
           <div className="dashboard-top-text">
-            <div className="dashboard-top-text-1">{isLoggedIn ? user?.role : 'Restricted'}</div>
+            {/* <div className="dashboard-top-text-1">{isLoggedIn ? user?.approle.role : 'Restricted'}</div> */}
+            <div className="dashboard-top-text-1">{isLoggedIn ? roleTest?.approle?.role : 'Restricted'}</div>
             <div className="dashboard-top-text-2">{isLoggedIn ? user?.fullname : 'Access'}</div>
           </div>
           <div className="dashboard-top-icon">

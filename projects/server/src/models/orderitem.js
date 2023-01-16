@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
   const Orderitem = sequelize.define(
-    'orderitem',
+    "orderitem",
     {
       order_id: {
         allowNull: false,
@@ -22,8 +22,8 @@ module.exports = (sequelize, DataTypes) => {
     {}
   );
   Orderitem.associate = (models) => {
-    Orderitem.hasOne(models.Transaction, { foreignKey: 'orderitem_id' });
-    Orderitem.hasMany(models.Product, { foreignKey: 'orderitem_id' });
+    Orderitem.hasOne(models.Transaction, { foreignKey: "orderitem_id" });
+    Orderitem.hasMany(models.Product, { foreignKey: "orderitem_id" });
   };
   return Orderitem;
 };

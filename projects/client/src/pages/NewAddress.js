@@ -4,7 +4,7 @@ import { Container, FormControl, Input, Button } from "@mui/material";
 import "../assets/styles/NewAddress.css";
 import Axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import {Link} from 'react-router-dom'
+import { Link } from "react-router-dom";
 
 function NewAddress() {
   const [provinces, setProvinces] = useState();
@@ -16,8 +16,8 @@ function NewAddress() {
   const [latitude, setLatitude] = useState();
   const [longitude, setLongitude] = useState();
   const [city, setCity] = useState();
-  const [city_id, setCity_id] = useState()
-  const [cityData, setCityData] = useState()
+  const [city_id, setCity_id] = useState();
+  const [cityData, setCityData] = useState();
   const [postal_code, setPostal_code] = useState();
 
   const { user } = useSelector((state) => ({
@@ -30,7 +30,7 @@ function NewAddress() {
     const provinceDetails = async () => {
       try {
         const response = await Axios.get(
-          "http://localhost:3300/api/address/provinces"
+          `${process.env.REACT_APP_API_BASE_URL}/address/provinces`
         );
         let provincesArr = JSON.parse(response.data);
         setProvinces(provincesArr);
@@ -45,7 +45,7 @@ function NewAddress() {
     const locationDetail = async () => {
       try {
         const response = await Axios.get(
-          "http://localhost:3300/api/address/cities"
+          `${process.env.REACT_APP_API_BASE_URL}/address/cities`
         );
         let citiesArr = JSON.parse(response.data);
         setCities(citiesArr);
@@ -60,7 +60,7 @@ function NewAddress() {
     const postalsDetail = async () => {
       try {
         const response = await Axios.get(
-          "http://localhost:3300/api/address/postal-code"
+          `${process.env.REACT_APP_API_BASE_URL}/address/postal-code`
         );
         let postalsArr = JSON.parse(response.data);
         setPostals(postalsArr);
@@ -75,7 +75,7 @@ function NewAddress() {
     if (userUID) {
       const getUserById = async (userUID) => {
         const getId = await Axios.get(
-          `http://localhost:3300/api/customer/user/${userUID}`
+          `${process.env.REACT_APP_API_BASE_URL}/customer/user/${userUID}`
         );
         console.log(getId);
       };
@@ -83,21 +83,20 @@ function NewAddress() {
     }
   }, [userUID]);
 
-  const cityCheck=(e)=>{
-    setCityData(e)
-    const splitCity = cityData.split(" ")
-    let cityName = ""
-    if(splitCity.length>2){
-      for(let x=0;x<(splitCity.length-1);x++){
-        cityName = cityName + splitCity[x] + " "
+  const cityCheck = (e) => {
+    setCityData(e);
+    const splitCity = cityData.split(" ");
+    let cityName = "";
+    if (splitCity.length > 2) {
+      for (let x = 0; x < splitCity.length - 1; x++) {
+        cityName = cityName + splitCity[x] + " ";
       }
       setCity(cityName)
-      console.log(city)
     } else {
-      setCity(splitCity[0])
+      setCity(splitCity[0]);
     }
-    setCity_id(splitCity[splitCity.length-1])
-  }
+    setCity_id(splitCity[splitCity.length - 1]);
+  };
 
   const postLatLong = async () => {
     const data = {
@@ -105,7 +104,7 @@ function NewAddress() {
     };
     try {
       const response = await Axios.post(
-        "http://localhost:3300/api/address/lat-long",
+        `${process.env.REACT_APP_API_BASE_URL}/address/lat-long`,
         data
       );
       console.log(response, "latlong");
@@ -130,10 +129,10 @@ function NewAddress() {
       longitude: longitude,
       city_id: city_id,
     };
-    console.log(data)
+    console.log(data);
     try {
       await Axios.post(
-        `http://localhost:3300/api/address/add-new-address`,
+        `${process.env.REACT_APP_API_BASE_URL}/address/add-new-address`,
         data
       );
       alert("Berhasil");
@@ -147,7 +146,7 @@ function NewAddress() {
       <Container maxWidth="xs" className="mobile">
         <div className="new-address-page">
           <div className="new-address-detail">
-            <Link to ={`/address-list/${user?.customer_uid}`}>
+            <Link to={`/address-list/${user?.customer_uid}`}>
               <ArrowBackIcon />
             </Link>
             <div>Create New Address</div>
@@ -185,11 +184,13 @@ function NewAddress() {
             <select
               className="select-style"
               value={cityData}
-              onChange={e=>cityCheck(e.target.value)}
+              onChange={(e) => cityCheck(e.target.value)}
               onClick={postLatLong}
             >
               {cities?.rajaongkir.results.map((cityDetail, index) => {
-                return <option>{`${cityDetail.city_name} ${cityDetail.city_id}`}</option>;
+                return (
+                  <option>{`${cityDetail.city_name} ${cityDetail.city_id}`}</option>
+                );
               })}
             </select>
           </label>

@@ -44,6 +44,14 @@
   margin-left: 5px;
 }
 
+.font-name2 {
+  font-weight: bold;
+  font-size: 13px;
+  text-align: start;
+  margin-left: 5px;
+  color: rgb(160, 4, 4);
+}
+
 .button-category {
   display: flex;
   flex-direction: row;
@@ -94,6 +102,26 @@
 
 .cart-icon {
   margin-left: auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.login-text{
+  font-size: 11px;
+  color: gray;
+  margin-left: 4px;
+}
+
+.home-button-login{
+  border: none;
+  background-color: transparent;
+  line-height: 2px;
+  text-decoration: none;
+}
+
+.home-button-login:hover{
+  cursor: pointer;
 }
 
 .carousel-image {
@@ -129,4 +157,12 @@
   justify-content: center;
   text-decoration: none;
   color: black;
+}
+
+.app-name{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 5px;
+  padding: 5px;
 }

@@ -41,6 +41,11 @@ body {
   text-decoration: none;
 }
 
+.whdetail-disabled{
+  pointer-events: none;
+  text-decoration: none;
+}
+
 .whmanagement-search {
   display: flex;
   flex-direction: row;

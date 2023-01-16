@@ -1,5 +1,5 @@
 const {
-  models: { Warehouse },
+  models: { Warehouse, Stock },
 } = require("../models");
 const router = require("express").Router();
 const request = require("request");
@@ -102,7 +102,7 @@ router.get("/warehouse-list", async (req, res) => {
     {
       let picPathArray = response[i].picture.split("\\");
       let picPath =
-        "http://localhost:3300/" + picPathArray[1] + "/" + picPathArray[2];
+        "http://localhost:8000/" + picPathArray[1] + "/" + picPathArray[2];
       response[i].picture = picPath;
     }
     //  let picPathArray = response.picture.split("\\");
@@ -151,7 +151,7 @@ router.get("/warehouse-list/:id", async (req, res) => {
     });
        let picPathArray = response.picture.split("\\");
        let picPath =
-         "http://localhost:3300/" + picPathArray[1] + "/" + picPathArray[2];
+         "http://localhost:8000/" + picPathArray[1] + "/" + picPathArray[2];
        response.picture = picPath;
     res.json(response);
   } catch (error) {
@@ -177,7 +177,7 @@ router.put("/edit-warehouse/:id", upload.single('picture'), async (req, res) => 
         latitude: req.body.latitude,
         longitude: req.body.longitude,
         picture: req.file.path,
-        admin: req.body.admin
+        city_id: req.body.city_id,
       },
       {
         where: {
@@ -193,6 +193,20 @@ router.put("/edit-warehouse/:id", upload.single('picture'), async (req, res) => 
     console.log(error);
   }
 });
+
+// delete warehouse
+router.delete('/delete-warehouse/:id', async(req,res) => {
+  try {
+    const deleteWarehouse = await Warehouse.destroy({
+      where: {
+        id: req.params.id
+      }
+    })
+    res.status(200).json({message:"Warehouse Deleted", deleteWarehouse})
+  } catch (error) {
+    res.status(500).json(error)
+  }
+})
 
 // post latitude longitude from city
 router.post("/lat-long", async (req, res) => {
@@ -221,6 +235,38 @@ router.post("/lat-long", async (req, res) => {
       res.json({ message: "Warehouse Deleted" });
     } catch (error) {}
   });
+});
+
+// get warehouse list stock
+router.get("/warehouse-list-stock", async (req, res) => {
+  try {
+    const response = await Warehouse.findAll({
+      // include: [
+      //   {
+      //     model: Stock,
+      //     required: true
+      //   }
+      // ]
+    });
+
+    console.log("ini test", response.length)
+    for(let i = 0; i<response.length; i++)
+    {
+      let picPathArray = response[i].picture.split("\\");
+      let picPath =
+        "http://localhost:8000/" + picPathArray[1] + "/" + picPathArray[2];
+      response[i].picture = picPath;
+    }
+    //  let picPathArray = response.picture.split("\\");
+    //  let picPath =
+    //    "http://localhost:3300/" + picPathArray[1] + "/" + picPathArray[2];
+    // //  response.picture = picPath;
+    // console.log(picPath)
+    // console.log(JSON.stringify(response.picture))
+    res.json(response);
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 module.exports = router;

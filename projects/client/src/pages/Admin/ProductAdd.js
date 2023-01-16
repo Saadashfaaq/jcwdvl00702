@@ -1,15 +1,6 @@
 import Axios from 'axios';
 import { useState, useEffect } from 'react';
-import {
-  ArrowBack,
-  SportsSoccerOutlined,
-  BusinessCenterOutlined,
-  DirectionsBikeOutlined,
-  HikingOutlined,
-  HandymanOutlined,
-  MonitorHeartOutlined,
-  FitnessCenterOutlined,
-} from '@mui/icons-material';
+import { ArrowBack } from '@mui/icons-material';
 import { useHistory } from 'react-router-dom';
 import { Container, Button, IconButton, InputBase, Select, MenuItem, TextField } from '@mui/material';
 import '../../assets/styles/ProductAdd.css';
@@ -27,12 +18,15 @@ export default function ProductAdd() {
 
   useEffect(() => {
     fetchCategories();
+    getWh();
   }, []);
 
   const [selectIcon, setSelectIcon] = useState(0);
   const [categoryList, setCategoryList] = useState([]);
+  const [whList, setWhList] = useState([]);
   const [picture, setPicture] = useState('');
-  const [qtyWh, setQtyWh] = useState([{ qty: 0 }, { qty: 0 }, { qty: 0 }]);
+  // const [qtyWh, setQtyWh] = useState([{ qty: 0 }, { qty: 0 }, { qty: 0 }]);
+  const [qtyWh, setQtyWh] = useState([]);
 
   const loadPicture = (e) => {
     const image = e.target.files[0];
@@ -54,7 +48,7 @@ export default function ProductAdd() {
     validationSchema: Yup.object().shape({
       name: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!'),
       product_detail: Yup.string().min(2, 'Too Short!').max(100, 'Too Long!'),
-      category_id: Yup.string().min(2, 'Too Short!').max(50, 'Too Long!'),
+      category_id: Yup.string(),
     }),
     validateOnChange: false,
     onSubmit: async (values) => {
@@ -67,13 +61,17 @@ export default function ProductAdd() {
       data.append('product_detail', values.product_detail);
       data.append('category_id', selectIcon);
       data.append('picture', picture);
-      data.append('wh_1', qtyWh[0].qty);
-      data.append('wh_2', qtyWh[1].qty);
-      data.append('wh_3', qtyWh[2].qty);
+      // data.append('wh_1', qtyWh[0].qty);
+      // data.append('wh_2', qtyWh[1].qty);
+      // data.append('wh_3', qtyWh[2].qty);
+      for (var i = 0; i < qtyWh.length; i += 1) {
+        // var x = qtyWh[i];
+        data.append(`wh${i + 1}`, qtyWh[i].qty);
+      }
 
       // Axios.post('http://localhost:3300/api/product/add-product', { ...data, quantity: qtyWh })
 
-      Axios.post('http://localhost:3300/api/product/add-product', data)
+      Axios.post(`${process.env.REACT_APP_API_BASE_URL}/product/add-product`, data)
         .then(() => {
           alert('Product Added!');
         })
@@ -83,31 +81,57 @@ export default function ProductAdd() {
     },
   });
 
+  // GET WH
+  const getWh = () => {
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/product/get-wh`)
+      .then((result) => {
+        setWhList(result.data);
+        console.log(result.data);
+        for (let i = 0; i < result.data.length; i++) {
+          const wrapper = { qty: 0 };
+          qtyWh.push(wrapper);
+        }
+        console.log('90', qtyWh);
+      })
+      .catch((err) => {
+        alert('Terjadi kesalahan di server');
+      });
+  };
+
   // UPDATE STOCK
   const warehouseStock = (id) => {
-    return (
-      <div className="pdadd-stock-wh">
-        <div className="pdadd-stock-name">Warehouse {id + 1}</div>
-        <div className="pdadd-stock-qty">
-          <InputBase
-            sx={{ fontFamily: 'Lora', width: '100px' }}
-            placeholder="Amount"
-            className="pdadd-stock-qty-input"
-            value={qtyWh[id].qty}
-            onChange={(e) => {
-              const copyQtyWh = [...qtyWh];
-              copyQtyWh[id].qty = e.target.value;
-              setQtyWh(copyQtyWh);
-            }}
-          />
-          <span className="pdadd-stock-qty-text">pcs</span>
-        </div>
-      </div>
-    );
+    console.log('103', whList);
+    return whList.map((val, index) => {
+      console.log(qtyWh);
+
+      return (
+        <>
+          <div className="pdadd-stock-wh">
+            <div className="pdadd-stock-name">Warehouse {val}</div>
+            <div className="pdadd-stock-qty">
+              <InputBase
+                sx={{ fontFamily: 'Lora', width: '100px' }}
+                placeholder="Amount"
+                className="pdadd-stock-qty-input"
+                value={qtyWh[index].qty}
+                onChange={(e) => {
+                  const copyQtyWh = [...qtyWh];
+                  // const copyQtyWh = qtyWh;
+
+                  copyQtyWh[index].qty = e.target.value;
+                  setQtyWh(copyQtyWh);
+                }}
+              />
+              <span className="pdadd-stock-qty-text">pcs</span>
+            </div>
+          </div>
+        </>
+      );
+    });
   };
 
   const fetchCategories = () => {
-    Axios.get('http://localhost:3300/api/product/get-category')
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/product/get-category`)
       .then((result) => {
         setCategoryList(result.data);
       })
@@ -161,8 +185,8 @@ export default function ProductAdd() {
                 {categoryList.map((val, index) => {
                   return (
                     <MenuItem value={categoryList[index].id}>
-                      {val.name}
                       <img src={val.picture} />
+                      {val.name}
                     </MenuItem>
                   );
                 })}
@@ -201,7 +225,8 @@ export default function ProductAdd() {
           <hr className="splitter" />
         </div>
 
-        <div className="pdadd-stock">{qtyWh.map((item, index) => warehouseStock(index))}</div>
+        {/* <div className="pdadd-stock">{qtyWh.map((item, index) => warehouseStock(index))}</div> */}
+        <div className="pdadd-stock">{warehouseStock()}</div>
 
         <div className="pdadd-button">
           <button class="pdadd-button-2" type="submit" onClick={formik.handleSubmit}>

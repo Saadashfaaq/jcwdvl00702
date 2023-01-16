@@ -20,7 +20,9 @@ export default function Checkout() {
 
   // mengambil cart dan product
   const cartProduct = () => {
-    Axios.get(`http://localhost:3300/api/cart/get-cart-product/${id}`)
+    Axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/cart/get-cart-product/${id}`
+    )
       .then((result) => {
         setState(result.data);
         console.log("ini cart-product data", result.data);
@@ -32,7 +34,9 @@ export default function Checkout() {
 
   // mengambil total harga pada cart
   const getTotalPrice = () => {
-    Axios.get(`http://localhost:3300/api/cart/get-total-price/${id}`)
+    Axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/cart/get-total-price/${id}`
+    )
       .then((result) => {
         setTotalPrice(result.data);
       })
@@ -43,7 +47,7 @@ export default function Checkout() {
 
   // mengambil data order
   const getOrder = () => {
-    Axios.get(`http://localhost:3300/api/order/get-order/${id}/`)
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/order/get-order/${id}/`)
       .then((result) => {
         setOrder(result.data);
         console.log("ini order list:", result.data);
@@ -58,16 +62,16 @@ export default function Checkout() {
     history.push(`/address-list/${id}`);
   };
 
-
   const updateTotalPay = () => {
     const data = {
       total_price: totalPrice + order.shipping_price,
     };
-    Axios.put(`http://localhost:3300/api/order/final-payment/${id}`, data).then(
-      (res) => {
-        console.log(res.data);
-      }
-    );
+    Axios.put(
+      `${process.env.REACT_APP_API_BASE_URL}/order/final-payment/${id}`,
+      data
+    ).then((res) => {
+      console.log(res.data);
+    });
   };
 
   // product detail

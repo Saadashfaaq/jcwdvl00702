@@ -1,9 +1,10 @@
 const {
-  models: { Category, Product, Stock, Stockmutation, Stockhistory },
+  models: { Category, Product, Stock, Stockmutation, Stockhistory, Warehouse },
 } = require('../models');
 const router = require('express').Router();
 const multer = require('multer');
 const { where, Op } = require('sequelize');
+const stock = require('../models/stock');
 // const stockhistory = require('../models/stockhistory');
 
 const storage = multer.diskStorage({
@@ -31,13 +32,14 @@ router.post('/add-category', upload.single('image'), async (req, res) => {
     if (checkBox === true) {
       res.status(500).json(err);
     } else {
-      let picPathArray = req.file.path.split('/');
-      let picPath = 'http://localhost:3300/' + picPathArray[1] + '/' + picPathArray[2];
+      let picPathArray = req.file.path.split('\\');
+      let picPath = 'http://localhost:8000/' + picPathArray[1] + '/' + picPathArray[2];
 
       const newCategory = await Category.create({
         name: req.body.name,
         alt_name: req.body.name.toLowerCase(),
         picture: picPath,
+        // picture: req.file.path,
       });
       const categoryId = await Category.findOne({
         where: {
@@ -55,7 +57,13 @@ router.post('/add-category', upload.single('image'), async (req, res) => {
 router.get('/get-category', async (req, res) => {
   try {
     const result = await Category.findAll();
+
+    // for (let i = 0; i < result.length; i++) {
+    //   let picPathArray = result[i].picture.split('\\');
+    //   let picPath = 'http://localhost:8000//' + picPathArray[1] + '/' + picPathArray[2];
+    //   result[i].picture = picPath;
     res.status(200).json(result);
+    // }
   } catch (err) {
     res.status(500).json(err);
   }
@@ -116,8 +124,26 @@ router.patch('/edit-category/:id', async (req, res) => {
   }
 });
 
+// GET WH FOR ADD PRODUCT
+router.get('/get-wh', async (req, res) => {
+  try {
+    const findWh = await Warehouse.findAll({
+      attributes: ['id'],
+    });
+    const allWh = findWh.map((u) => u.get('id'));
+
+    res.status(200).json(allWh);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
 // ADD PRODUCT
 router.post('/add-product', upload.single('picture'), async (req, res) => {
+  const findWh = await Warehouse.findAll({
+    attributes: ['id'],
+  });
+  const allWh = findWh.map((u) => u.get('id'));
   try {
     let getProductName = await Product.findAll();
     let checkBox = false;
@@ -145,23 +171,17 @@ router.post('/add-product', upload.single('picture'), async (req, res) => {
           name: req.body.name,
         },
       });
-      const stockData = [
-        {
-          warehouse_id: '1',
-          product_id: productId.id,
-          quantity: req.body.wh_1,
-        },
-        {
-          warehouse_id: '2',
-          product_id: productId.id,
-          quantity: req.body.wh_2,
-        },
-        {
-          warehouse_id: '3',
-          product_id: productId.id,
-          quantity: req.body.wh_3,
-        },
-      ];
+
+      let stockData = [];
+      for (let i = 0; i < allWh.length; i++) {
+        let wrapper = {};
+        wrapper.warehouse_id = allWh[i].toString();
+        wrapper.product_id = productId.id;
+        wrapper.quantity = req.body['wh' + (i + 1)];
+        stockData.push(wrapper);
+        wrapper = {};
+      }
+
       const newStock = await Stock.bulkCreate(stockData, { returning: true });
       res.status(200).json(newProduct);
     }
@@ -185,7 +205,7 @@ router.get('/home-product/', async (req, res) => {
 
     for (let i = 0; i < getProduct.length; i++) {
       let picPathArray = getProduct[i].picture.split('\\');
-      let picPath = 'http://localhost:3300/' + picPathArray[1] + '/' + picPathArray[2];
+      let picPath = 'http://localhost:8000/' + picPathArray[1] + '/' + picPathArray[2];
       getProduct[i].picture = picPath;
     }
     console.log('url check', getProduct[0].picture);
@@ -251,7 +271,7 @@ router.get('/get-product/:id', async (req, res) => {
       },
     });
     let picPathArray = getProduct.picture.split('\\');
-    let picPath = 'http://localhost:3300/' + picPathArray[1] + '/' + picPathArray[2];
+    let picPath = 'http://localhost:8000/' + picPathArray[1] + '/' + picPathArray[2];
     getProduct.picture = picPath;
 
     const getStock = await Stock.findAll({
@@ -259,7 +279,12 @@ router.get('/get-product/:id', async (req, res) => {
         product_id: req.params.id,
       },
     });
-    const stockWh = [getStock[0].quantity, getStock[1].quantity, getStock[2].quantity];
+    // const stockWh = [getStock[0].quantity, getStock[1].quantity, getStock[2].quantity];
+    const stockWh = [];
+    for (let i = 0; i < getStock.length; i++) {
+      let temp = getStock[i].quantity;
+      stockWh.push(temp);
+    }
 
     res.status(200).json({ getProduct, stockWh });
   } catch (err) {
@@ -435,47 +460,86 @@ router.get('/get-mutation', async (req, res) => {
     const productLength = await Stockmutation.findAll({});
     const sort = req.query.sort || 'DESC';
     const filter = req.query.filter || '';
-    const myWh = req.query.mywh;
+    const myWh = req.query.mywh || '';
 
-    const resultCount = await Stockmutation.findAll({
-      where: {
-        move_type: filter,
-        [Op.or]: [{ warehouse_id: myWh }, { requester: myWh }],
-      },
-      ...(req.query.search && {
+    if (myWh === '') {
+      const resultCount = await Stockmutation.findAll({
         where: {
-          product_id: {
-            [Op.eq]: `%${req.query.search}%`,
-          },
+          move_type: filter,
         },
-      }),
-    });
-    const result = await Stockmutation.findAll({
-      where: {
-        move_type: filter,
-        [Op.or]: [{ warehouse_id: myWh }, { requester: myWh }],
-      },
-      limit: limit,
-      offset: page * limit,
-      order: [['createdAt', sort]],
-      ...(req.query.search && {
+        ...(req.query.search && {
+          where: {
+            product_id: {
+              [Op.eq]: `%${req.query.search}%`,
+            },
+          },
+        }),
+      });
+      const result = await Stockmutation.findAll({
         where: {
-          product_id: {
-            [Op.eq]: `%${req.query.search}%`,
-          },
+          move_type: filter,
         },
-      }),
-    });
-    const pages = Math.ceil(resultCount.length / limit);
+        limit: limit,
+        offset: page * limit,
+        order: [['createdAt', sort]],
+        ...(req.query.search && {
+          where: {
+            product_id: {
+              [Op.eq]: `%${req.query.search}%`,
+            },
+          },
+        }),
+      });
+      const pages = Math.ceil(resultCount.length / limit);
+      res.status(200).json({
+        result: result,
+        pages: pages,
+        page: page,
+        order: sort,
+        search: search,
+        filter: filter,
+      });
+    } else {
+      const resultCount = await Stockmutation.findAll({
+        where: {
+          move_type: filter,
+          [Op.or]: [{ warehouse_id: myWh }, { requester: myWh }],
+        },
+        ...(req.query.search && {
+          where: {
+            product_id: {
+              [Op.eq]: `%${req.query.search}%`,
+            },
+          },
+        }),
+      });
+      const result = await Stockmutation.findAll({
+        where: {
+          move_type: filter,
+          [Op.or]: [{ warehouse_id: myWh }, { requester: myWh }],
+        },
+        limit: limit,
+        offset: page * limit,
+        order: [['createdAt', sort]],
+        ...(req.query.search && {
+          where: {
+            product_id: {
+              [Op.eq]: `%${req.query.search}%`,
+            },
+          },
+        }),
+      });
+      const pages = Math.ceil(resultCount.length / limit);
 
-    res.status(200).json({
-      result: result,
-      pages: pages,
-      page: page,
-      order: sort,
-      search: search,
-      filter: filter,
-    });
+      res.status(200).json({
+        result: result,
+        pages: pages,
+        page: page,
+        order: sort,
+        search: search,
+        filter: filter,
+      });
+    }
   } catch (err) {
     res.status(500).json(err);
   }
@@ -804,7 +868,7 @@ router.get('/product-stock-history/:id', async (req, res) => {
 
   try {
     let picPathArray = getProduct.picture.split('/');
-    let picPath = 'http://localhost:3300/' + picPathArray[1] + '/' + picPathArray[2];
+    let picPath = 'http://localhost:8000/' + picPathArray[1] + '/' + picPathArray[2];
     getProduct.picture = picPath;
 
     const getHistory = await Stockhistory.findAll({
@@ -1311,7 +1375,7 @@ router.get('/product-stock-history/:id', async (req, res) => {
 
   try {
     let picPathArray = getProduct.picture.split('/');
-    let picPath = 'http://localhost:3300/' + picPathArray[1] + '/' + picPathArray[2];
+    let picPath = 'http://localhost:8000/' + picPathArray[1] + '/' + picPathArray[2];
     getProduct.picture = picPath;
 
     const getHistory = await Stockhistory.findAll({
@@ -1328,4 +1392,321 @@ router.get('/product-stock-history/:id', async (req, res) => {
   }
 });
 
+
+// STOCK MUTATION OTOMATIS
+router.post('/qty-handler', async (req, res) => {
+  console.log("ini re body", req.body)
+  
+  const stockFrom = await Stock.findOne({
+    where: {
+      warehouse_id: req.body.whList[1].id,
+      product_id: req.body.orderitem.product_id,
+    },
+  });
+
+  const secStockFrom = await Stock.findOne({
+    where: {
+      warehouse_id: req.body.whList[2].id,
+      product_id: req.body.orderitem.product_id,
+    },
+  });
+
+
+  const stockTo = await Stock.findOne({
+    where: {
+      warehouse_id: req.body.whList[0].id,
+      product_id: req.body.orderitem.product_id,
+    },
+  });
+
+  const needQty = req.body.orderitem.quantity - stockTo.quantity
+
+  const theProduct = await Product.findOne({
+    where: {
+      id: req.body.orderitem.product_id
+    },
+  });
+
+  if(stockTo.quantity >= req.body.orderitem.quantity){
+    try {
+      const updateStock = await Product.update(
+        {
+          quantity_total: theProduct.quantity_total - req.body.orderitem.quantity,
+        },
+        {
+          where: {
+            id: req.body.orderitem.product_id,
+          },
+          returning: true,
+          plain: true,
+        }
+      );
+      const changeStock = await Stock.update(
+        {
+          quantity: stockTo.quantity - req.body.orderitem.quantity ,
+        },
+        {
+          where: {
+            warehouse_id: req.body.whList[0].id,
+            product_id: req.body.orderitem.product_id
+          },
+          returning: true,
+          plain: true,
+        }
+      );
+
+      const mutationData = {
+        stock_id: stockTo.id,
+        warehouse_id: req.body.whList[0].id,
+        product_id: req.body.orderitem.product_id,
+        product_name: theProduct.name,
+        product_picture: theProduct.picture,
+        quantity: req.body.orderitem.quantity,
+        requester: req.body.whList[0].id,
+        status: 'done',
+        move_type: 'auto',
+      }
+
+      const newMutation = await Stockmutation.create(mutationData);
+
+      res.status(201).json(newMutation);
+    } catch (err){
+      res.status(500).json(err);
+    }
+  } else if (stockTo.quantity < req.body.orderitem.quantity){
+    if (stockFrom.quantity >= needQty){
+      const mutationData = {
+        stock_id: stockFrom.id,
+        warehouse_id: req.body.whList[1].id,
+        product_id: req.body.orderitem.product_id,
+        product_name: theProduct.name,
+        product_picture: theProduct.picture,
+        quantity: needQty,
+        requester: req.body.whList[0].id,
+        status: 'done',
+        move_type: 'auto',
+      }
+
+    
+      try {
+        const updateStock = await Product.update(
+          {
+            quantity_total: theProduct.quantity_total - req.body.orderitem.quantity,
+          },
+          {
+            where: {
+              id: req.body.orderitem.product_id,
+            },
+            returning: true,
+            plain: true,
+          }
+        );
+
+        const changeStock = await Stock.update(
+          {
+            quantity: (stockTo.quantity + needQty ) - req.body.orderitem.quantity ,
+          },
+          {
+            where: {
+              warehouse_id: req.body.whList[0].id,
+              product_id: req.body.orderitem.product_id
+            },
+            returning: true,
+            plain: true,
+          }
+        );
+
+        const changeStockFrom = await Stock.update(
+          {
+            quantity: stockFrom.quantity - needQty ,
+          },
+          {
+            where: {
+              warehouse_id: req.body.whList[1].id,
+              product_id: req.body.orderitem.product_id
+            },
+            returning: true,
+            plain: true,
+          }
+        );
+
+
+  
+        const newMutation = await Stockmutation.create(mutationData);
+
+        res.status(200).json(newMutation);
+      } catch (err) {
+        res.status(500).json(err);
+      }
+    } else if (stockFrom.quantity < needQty){
+      const mutationData = {
+        stock_id: secStockFrom.id,
+        warehouse_id: req.body.whList[2].id,
+        product_id: req.body.orderitem.product_id,
+        product_name: theProduct.name,
+        product_picture: theProduct.picture,
+        quantity: needQty,
+        requester: req.body.whList[0].id,
+        status: 'done',
+        move_type: 'auto',
+      }
+
+    
+      try {
+        const updateStock = await Product.update(
+          {
+            quantity_total: theProduct.quantity_total - req.body.orderitem.quantity,
+          },
+          {
+            where: {
+              id: req.body.orderitem.product_id,
+            },
+            returning: true,
+            plain: true,
+          }
+        );
+
+        const changeStock = await Stock.update(
+          {
+            quantity: (stockTo.quantity + needQty ) - req.body.orderitem.quantity ,
+          },
+          {
+            where: {
+              warehouse_id: req.body.whList[0].id,
+              product_id: req.body.orderitem.product_id
+            },
+            returning: true,
+            plain: true,
+          }
+        );
+
+        const changeStockFrom = await Stock.update(
+          {
+            quantity: stockFrom.quantity - needQty ,
+          },
+          {
+            where: {
+              warehouse_id: req.body.whList[2].id,
+              product_id: req.body.orderitem.product_id
+            },
+            returning: true,
+            plain: true,
+          }
+        );
+
+
+  
+        const newMutation = await Stockmutation.create(mutationData);
+
+        res.status(200).json(newMutation);
+      } catch (err) {
+        res.status(500).json(err);
+      } 
+    }
+  }
+
+});
+
+
+
+// RESPOND MUTATION - AUTO
+router.post('/qty-handler-history', async (req, res) => {
+  const theMutation = await Stockmutation.findOne({
+    where: {
+      id: req.body.stockmutation_id,
+    },
+  });
+  const theStockFrom = await Stock.findOne({
+    where: {
+      product_id: theMutation.product_id,
+      warehouse_id: theMutation.warehouse_id,
+    },
+  });
+  const theStockTo = await Stock.findOne({
+    where: {
+      product_id: theMutation.product_id,
+      warehouse_id: theMutation.requester,
+    },
+  });
+  const theProduct = await Product.findOne({
+    where: {
+      id: theMutation.product_id,
+    },
+  });
+  const theDate = new Date();
+  const historyData = [
+    {
+      stock_id: theStockFrom.id,
+      stockmutation_id: theMutation.id,
+      warehouse_id: theStockFrom.warehouse_id,
+      product_id: theMutation.product_id,
+      product_name: theMutation.product_name,
+      product_picture: theMutation.product_picture,
+      math: '-',
+      quantity: theMutation.quantity,
+      start: theStockFrom.quantity,
+      end: theStockFrom.quantity - parseInt(theMutation.quantity),
+      requester: theMutation.requester,
+      year: theDate.getFullYear(),
+      month: theDate.getMonth() + 1,
+    },
+    {
+      stock_id: theStockTo.id,
+      stockmutation_id: theMutation.id,
+      warehouse_id: theStockTo.warehouse_id,
+      product_id: theMutation.product_id,
+      product_name: theMutation.product_name,
+      product_picture: theMutation.product_picture,
+      math: '+',
+      quantity: theMutation.quantity,
+      start: theStockTo.quantity,
+      end: theStockTo.quantity + parseInt(theMutation.quantity),
+      requester: theMutation.requester,
+      year: theDate.getFullYear(),
+      month: theDate.getMonth() + 1,
+    },
+  ];
+  const historyDataAlternate = [
+    {
+      stock_id: theStockFrom.id,
+      stockmutation_id: theMutation.id,
+      warehouse_id: theStockFrom.warehouse_id,
+      product_id: theMutation.product_id,
+      product_name: theMutation.product_name,
+      product_picture: theMutation.product_picture,
+      math: '-',
+      quantity: theStockFrom.quantity,
+      start: theStockFrom.quantity,
+      end: theStockFrom.quantity - parseInt(theStockFrom.quantity),
+      requester: theMutation.requester,
+      year: theDate.getFullYear(),
+      month: theDate.getMonth() + 1,
+    },
+    {
+      stock_id: theStockTo.id,
+      stockmutation_id: theMutation.id,
+      warehouse_id: theStockTo.warehouse_id,
+      product_id: theMutation.product_id,
+      product_name: theMutation.product_name,
+      product_picture: theMutation.product_picture,
+      math: '+',
+      quantity: theStockFrom.quantity,
+      start: theStockTo.quantity,
+      end: theStockTo.quantity + parseInt(theStockFrom.quantity),
+      requester: theMutation.requester,
+      year: theDate.getFullYear(),
+      month: theDate.getMonth() + 1,
+    },
+  ];
+
+  
+      try{
+        const newHistory = await Stockhistory.bulkCreate(historyDataAlternate, { returning: true });
+        // const message = `Mutation success but amount available is only ` + theStockFrom.quantity + ` pcs.`;
+        
+        res.status(200).json( newHistory );
+      } catch (err) {
+        res.status(500).json(err);
+      }
+});
 module.exports = router;

@@ -2,16 +2,14 @@ import React, { useEffect, useState, useContext } from "react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Container, FormControl, Input, Button } from "@mui/material";
 import "../assets/styles/NewAddress.css";
-import { AuthContext } from "../context/AuthProvider";
 import Axios from "axios";
-import { useParams } from "react-router-dom";
+import { useParams, useHistory } from "react-router-dom";
 import { shallowEqual, useDispatch, useSelector } from "react-redux";
 
 function EditAddress() {
   const [provinces, setProvinces] = useState();
   const [cities, setCities] = useState();
   const [postals, setPostals] = useState();
-//   const { user: currentUser } = useContext(AuthContext);
   const [address_name, setAddress_name] = useState();
   const [address, setAddress] = useState();
   const [province, setProvince] = useState();
@@ -19,22 +17,26 @@ function EditAddress() {
   const [postal_code, setPostal_code] = useState();
   const [latitude, setLatitude] = useState();
   const [longitude, setLongitude] = useState();
+  const [cityId, setCityId] = useState()
+  const [cityData, setCityData] = useState()
   const { id } = useParams();
-//  console.log(currentUser);
-//   const userUID = currentUser?.uid;
-//   console.log(userUID);
-const { isLoggedIn, user } = useSelector((state) => ({
-  isLoggedIn: state.auth.isLoggedIn,
-  user: state.auth.user,
-}));
-const userUID = user?.customer_uid;
-console.log(user);
+  const history = useHistory();
+
+  const { isLoggedIn, user } = useSelector((state) => ({
+    isLoggedIn: state.auth.isLoggedIn,
+    user: state.auth.user,
+  }));
+  const userUID = user?.customer_uid;
+
+  const goBack = () => {
+    history.goBack();
+  };
 
   useEffect(() => {
     const provinceDetails = async () => {
       try {
         const response = await Axios.get(
-          "http://localhost:3300/api/address/provinces"
+          `${process.env.REACT_APP_API_BASE_URL}/address/provinces`
         );
         let provincesArr = JSON.parse(response.data);
         setProvinces(provincesArr);
@@ -49,7 +51,7 @@ console.log(user);
     const locationDetail = async () => {
       try {
         const response = await Axios.get(
-          "http://localhost:3300/api/address/cities"
+          `${process.env.REACT_APP_API_BASE_URL}/address/cities`
         );
         let citiesArr = JSON.parse(response.data);
         setCities(citiesArr);
@@ -64,7 +66,7 @@ console.log(user);
     const postalsDetail = async () => {
       try {
         const response = await Axios.get(
-          "http://localhost:3300/api/address/postal-code"
+          `${process.env.REACT_APP_API_BASE_URL}/address/postal-code`
         );
         let postalsArr = JSON.parse(response.data);
         setPostals(postalsArr);
@@ -79,9 +81,8 @@ console.log(user);
     if (userUID) {
       const getAddressById = async (userUID) => {
         const getAddress = await Axios.get(
-          `http://localhost:3300/api/address/address-list/${userUID}/${id}`
+          `${process.env.REACT_APP_API_BASE_URL}/address/address-list/${userUID}/${id}`
         );
-        console.log(getAddress);
         setAddress_name(getAddress.data.address_name);
         setAddress(getAddress.data.address);
         setProvince(getAddress.data.province);
@@ -89,22 +90,38 @@ console.log(user);
         setPostal_code(getAddress.data.postal_code);
         setLatitude(getAddress.data.latitude);
         setLongitude(getAddress.data.longitude);
+        setCityId(getAddress.data.city_id)
+        const newCity = getAddress.data.city+" "+getAddress.data.city_id
+        setCityData(newCity)
       };
       getAddressById(userUID);
     }
   }, [userUID]);
 
+  const cityCheck=()=>{
+    const splitCity = cityData.split(" ")
+    let cityName = ""
+    if(splitCity.length>2){
+      for(let x=0;x<(splitCity.length-1);x++){
+        cityName = cityName + splitCity[x] + " "
+      }
+      setCity(cityName)
+    } else {
+      setCity(splitCity[0])
+    }
+    setCityId(splitCity[splitCity.length-1])
+  }
+
   const postLatLong = async () => {
+    cityCheck()
     const data = {
       city: city,
     };
     try {
       const response = await Axios.post(
-        "http://localhost:3300/api/address/lat-long",
+        `${process.env.REACT_APP_API_BASE_URL}/address/lat-long`,
         data
       );
-      console.log(response, "latlong");
-      console.log(response.data.results[0].geometry.lat, "test");
       setLatitude(response.data.results[0].geometry.lat);
       setLongitude(response.data.results[0].geometry.lng);
     } catch (error) {
@@ -114,6 +131,7 @@ console.log(user);
 
   const editAddress = async (e) => {
     e.preventDefault();
+
     const data = {
       address_name: address_name,
       address: address,
@@ -122,10 +140,11 @@ console.log(user);
       postal_code: postal_code,
       latitude: latitude,
       longitude: longitude,
+      city_id: cityId,
     };
     try {
       await Axios.put(
-        `http://localhost:3300/api/address/edit-address/${userUID}/${id}`,
+        `${process.env.REACT_APP_API_BASE_URL}/address/edit-address/${userUID}/${id}`,
         data
       );
       console.log(id, "ini id nya");
@@ -140,7 +159,7 @@ console.log(user);
       <Container maxWidth="xs" className="mobile">
         <div className="new-address-page">
           <div className="new-address-detail">
-            <ArrowBackIcon />
+            <ArrowBackIcon onClick={goBack} />
             <div>Edit Address</div>
           </div>
           <div className="margin-size">Address Label</div>
@@ -175,12 +194,12 @@ console.log(user);
           <label>
             <select
               className="select-style"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
+              value={cityData}
+              onChange={(e) => setCityData(e.target.value)}
               onClick={postLatLong}
             >
-              {cities?.rajaongkir.results.map((cityDetail, index) => {
-                return <option>{cityDetail.city_name}</option>;
+              {cities?.rajaongkir.results.map((cityDetail) => {
+                return <option>{`${cityDetail.city_name} ${cityDetail.city_id}`}</option>;
               })}
             </select>
           </label>

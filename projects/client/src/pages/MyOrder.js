@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   IconButton,
   Box,
@@ -17,29 +17,39 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-} from '@mui/material';
-import { Search, SortTwoTone, MoreHoriz, ContentPaste } from '@mui/icons-material';
-import { TabPanel, TabList, TabContext } from '@mui/lab';
-import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
-import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
-import '../assets/styles/OrderList.css';
-import Axios from 'axios';
+} from "@mui/material";
+import {
+  Search,
+  SortTwoTone,
+  MoreHoriz,
+  ContentPaste,
+} from "@mui/icons-material";
+import { TabPanel, TabList, TabContext } from "@mui/lab";
+import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
+import { useSelector } from "react-redux";
+import { Link, Redirect, useParams } from "react-router-dom";
+import "../assets/styles/OrderList.css";
+import Axios from "axios";
 
 function MyOrder() {
-  const { isLoggedIn, user } = useSelector((state) => ({
+  const { isLoggedIn, user, dataUser } = useSelector((state) => ({
     isLoggedIn: state.auth.isLoggedIn,
     user: state.auth.user,
+    dataUser: state.userData.userData,
   }));
   const userUID = user?.customer_uid;
   console.log(user);
-  const userData = user?.role;
-  console.log(userData);
+  const userData = user?.approle;
+  console.log(userData?.role);
 
   const [activeTab, setActiveTab] = useState();
   const [orderDetails, setOrderDetails] = useState();
   const [isSearch, setIsSearch] = useState(false);
   const [openC, setOpenC] = useState(false);
+  const [cancelIndex, setCancelIndex] = useState();
+  const [page, setPage] = useState(1);
+  const [maxPage, setMaxPage] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(3);
   // state = {
   //   isOnGoing: true,
   //   isCompleted: false,
@@ -52,16 +62,11 @@ function MyOrder() {
   //   setOpenC: false,
   // };
 
-  const handleChange = () => {
-    setActiveTab();
+  const handleChange = (e, value) => {
+    setActiveTab(value);
   };
 
   useEffect(() => {
-    const getOrderList = async () => {
-      const response = await Axios.get(`http://localhost:3300/api/order/get-order-cart-user-product/${userUID}`);
-      console.log(response?.data);
-      setOrderDetails(response?.data);
-    };
     getOrderList();
   }, []);
 
@@ -81,60 +86,107 @@ function MyOrder() {
     setOpenC(true);
   };
 
-  // handleChange = (event, value) => {
-  //   this.setState({ ...this.state, value });
-  // };
+  const isCanceled = (index) => {
+    setCancelIndex(index);
+  };
 
-  // isSearchHandle = () => {
-  //   this.setState({ ...this.state, isSearch: true });
-  // };
+  const getOrderList = () => {
+    Axios.get(
+      `${process.env.REACT_APP_API_BASE_URL}/order/get-order-cart-user-product/${userUID}`
+    )
+      .then((result) => {
+        console.log(result.data);
+        setOrderDetails(result.data);
+        const newMaxPage = Math.ceil(result.data.length / itemsPerPage);
+        setMaxPage(newMaxPage);
+      })
+      .catch((error) => {
+        alert("Terjadi kesalahan di server");
+      });
+  };
 
-  // isSearchHandleClose = () => {
-  //   this.setState({ ...this.state, isSearch: false });
-  // };
+  const nextPageHandler = () => {
+    if (page < maxPage) {
+      setPage(page + 1);
+    }
+  };
 
-  // handleCloseCancel = () => {
-  //   this.setState({ ...this.state, setOpenC: false });
-  // };
+  const prevPageHandler = () => {
+    if (page > 1) {
+      setPage(page - 1);
+    }
+  };
 
-  // handleClickOpenCancel = () => {
-  //   this.setState({ ...this.state, setOpenC: true });
-  // };
+
+  const cancelOrder = (id) => {
+    const data = {
+      status_detail: 6,
+    };
+    // for(i=0; i<=orderDetails.length; i++)
+    Axios.put(`${process.env.REACT_APP_API_BASE_URL}/order/cancel-order/${id}`, data)
+      .then(() => {
+        alert("Berhasil");
+        getOrderList();
+        // <Redirect to="/my-order/:customer_uid" />
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
 
   const olistcDetailStatus = (status) => {
-    if (status === '1') {
+    if (status === 0) {
       return (
-        <Box className="moc-detail-status-1" sx={{ backgroundColor: 'rgb(255,165,0,0.4)' }}>
+        <Box
+          className="moc-detail-status-1"
+          sx={{ backgroundColor: "rgb(255,165,0,0.4)" }}
+        >
           Waiting for payment
         </Box>
       );
-    } else if (status === '2') {
+    } else if (status === 1) {
       return (
-        <Box className="moc-detail-status-2" sx={{ backgroundColor: 'rgb(255,215,0,0.4)' }}>
+        <Box
+          className="moc-detail-status-2"
+          sx={{ backgroundColor: "rgb(255,215,0,0.4)" }}
+        >
           Payment confirmation
         </Box>
       );
-    } else if (status === '3') {
+    } else if (status === 2) {
       return (
-        <Box className="moc-detail-status-3" sx={{ backgroundColor: 'rgb(152,251,152,0.4)' }}>
+        <Box
+          className="moc-detail-status-3"
+          sx={{ backgroundColor: "rgb(152,251,152,0.4)" }}
+        >
           In process
         </Box>
       );
-    } else if (status === '4') {
+    } else if (status === 3) {
       return (
-        <Box className="moc-detail-status-4" sx={{ backgroundColor: 'rgba(127, 255, 212, 0.4)' }}>
+        <Box
+          className="moc-detail-status-4"
+          sx={{ backgroundColor: "rgba(127, 255, 212, 0.4)" }}
+        >
           In delivery
         </Box>
       );
-    } else if (status === '5') {
+    } else if (status === 4) {
       return (
-        <Box className="moc-detail-status-5" sx={{ backgroundColor: 'rgb(72,209,204,0.4)' }}>
+        <Box
+          className="moc-detail-status-5"
+          sx={{ backgroundColor: "rgb(72,209,204,0.4)" }}
+        >
           Received
         </Box>
       );
     } else {
       return (
-        <Box className="moc-detail-status-6" sx={{ backgroundColor: 'rgb(220,20,60,0.4)' }}>
+        <Box
+          className="moc-detail-status-6"
+          sx={{ backgroundColor: "rgb(220,20,60,0.4)" }}
+        >
           Canceled
         </Box>
       );
@@ -146,7 +198,11 @@ function MyOrder() {
       <PopupState variant="popover" popupId="demo-popup-menu">
         {(popupState) => (
           <React.Fragment>
-            <button className="account-button" variant="contained" {...bindTrigger(popupState)}>
+            <button
+              className="account-button"
+              variant="contained"
+              {...bindTrigger(popupState)}
+            >
               <IconButton>
                 <MoreHoriz />
               </IconButton>
@@ -163,22 +219,34 @@ function MyOrder() {
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link to="/warehouse-management" className="userlist-banner-menu-link">
+                <Link
+                  to="/warehouse-management"
+                  className="userlist-banner-menu-link"
+                >
                   Warehouse Mng.
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link to="/products-management-list" className="userlist-banner-menu-link">
+                <Link
+                  to="/products-management-list"
+                  className="userlist-banner-menu-link"
+                >
                   Product List
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link to="/products-management-category" className="userlist-banner-menu-link">
+                <Link
+                  to="/products-management-category"
+                  className="userlist-banner-menu-link"
+                >
                   Product Category
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link to="/stock-mutation" className="userlist-banner-menu-link">
+                <Link
+                  to="/stock-mutation"
+                  className="userlist-banner-menu-link"
+                >
                   Stock Mutation
                 </Link>
               </MenuItem>
@@ -204,85 +272,178 @@ function MyOrder() {
     );
   };
 
-  const orderListCard = (status) => {
+  const defaultOngoing = () => {
+      <div className="orderlist-og">
+        <img
+          src="https://i.pinimg.com/originals/6f/df/bc/6fdfbc41d6a8e26d4b9073bc1afd899f.jpg"
+          className="orderlist-og-logo"
+          alt="No Order"
+        />
+        <div className="orderlist-og-text-1">You don't have an order yet</div>
+        <div className="orderlist-og-text-2">
+          You don't have On Going orders at this time
+        </div>
+      </div>
+  }
+
+  const defaultComplete = () => {
+      <div className="orderlist-og">
+        <img
+          src="https://i.pinimg.com/originals/6f/df/bc/6fdfbc41d6a8e26d4b9073bc1afd899f.jpg"
+          className="orderlist-og-logo"
+          alt="No Order"
+        />
+        <div className="orderlist-og-text-1">You don't have any completed order yet</div>
+        <div className="orderlist-og-text-2">
+          You don't have any complete orders at this time
+        </div>
+      </div>
+  }
+
+  const orderListCard = (input) => {
+    const beginningIndex = (page - 1) * itemsPerPage;
+    console.log("ini orderdetail", orderDetails);
+    let orderCheck = [];
+    console.log(input, "ini input")
+    if(input === 2) {
+      orderCheck = [];
+      orderDetails?.forEach(function(order) {
+        if (order.status_detail === 4) {
+          orderCheck.push(order);
+        }
+      })
+    } else if (input === 1){
+      orderCheck = [];
+      orderDetails?.forEach(function (order) {
+        if (
+          order.status_detail === 0 ||
+          order.status_detail === 1 ||
+          order.status_detail === 2 ||
+          order.status_detail === 3 ||
+          order.status_detail === 6
+        ) {
+          orderCheck.push(order);
+        }
+      });
+    }
+    console.log('order check', orderCheck);
+    const slicedData = orderCheck.slice(
+      beginningIndex,
+      beginningIndex + itemsPerPage
+    );
     return (
       <>
-        {/* {orderDetails?.map((orderDetail) => ( */}
-        <>
-          <div className="olistc-main">
-            <div className="olistc-subdetail">
-              <div className="olistc-detail-name">Order ID</div>
-              <div className="olistc-detail-subname">Order Date</div>
-              <div className="olistc-detail-subname">User ID</div>
-              <div className="olistc-detail-subname">User</div>
-              <div className="olistc-detail-subname">From</div>
-              {olistcDetailStatus(status)}
-            </div>
-            <div className="olistc-detail">
-              {/* {orderDetail.orderitems?.map((orderitem) => ( */}
-              <>
-                <div className="olistc-detail-name">{orderDetails[0].orderitems[0].order_id}</div>
-                <div className="olistc-detail-subname">{orderDetails[0].orderitems[0].updatedAt}</div>
-                <div className="olistc-detail-subname">{orderDetails[0].customer_uid}</div>
-                <div className="olistc-detail-subname">{orderDetails[0].fullname}</div>
-                <div className="olistc-detail-subname">Warehouse {orderDetails[0].orderitems[0].warehouse_id}</div>
-              </>
-              <div className="olistc-detail-bottom">
-                <Button
-                  sx={{
-                    borderRadius: '20px',
-                    backgroundColor: 'white',
-                    color: 'red',
-                    fontSize: '8px',
-                    fontFamily: 'Lora',
-                  }}
-                  variant="contained"
-                  onClick={handleClickOpenCancel}
-                  className="olistc-detail-bottom-track">
-                  Cancel
-                </Button>
-                <Dialog
-                  open={openC}
-                  onClose={handleCloseCancel}
-                  aria-labelledby="alert-dialog-title"
-                  aria-describedby="alert-dialog-description">
-                  <DialogTitle id="alert-dialog-title">{'Cancel this order'}</DialogTitle>
-                  <DialogContent>
-                    <DialogContentText id="alert-dialog-description">Are you sure ?</DialogContentText>
-                  </DialogContent>
-                  <DialogActions>
-                    <Button onClick={handleCloseCancel}>No</Button>
-                    <Button onClick={handleCloseCancel} autoFocus>
-                      Yes
-                    </Button>
-                  </DialogActions>
-                </Dialog>
-                <Link
-                  to={{
-                    pathname: `/my-order-detail/${userUID}`,
-                  }}>
-                  <Button
-                    sx={{
-                      borderRadius: '20px',
-                      backgroundColor: 'black',
-                      fontSize: '8px',
-                      fontFamily: 'Lora',
+        {slicedData?.map((orderDetail, index) => (
+          <>
+            <div className="olistc-main">
+              <div className="olistc-subdetail">
+                <div className="olistc-detail-name">Order ID</div>
+                <div className="olistc-detail-subname">Order Date</div>
+                <div className="olistc-detail-subname">User ID</div>
+                <div className="olistc-detail-subname">User</div>
+                <div className="olistc-detail-subname">From</div>
+                {olistcDetailStatus(orderDetail?.status_detail)}
+              </div>
+              <div className="olistc-detail">
+                <>
+                  <div className="olistc-detail-name">{orderDetail?.id}</div>
+                  <div className="olistc-detail-subname">
+                    {orderDetail?.createdAt}
+                  </div>
+                  <div className="olistc-detail-subname">
+                    {orderDetail?.customer_uid}
+                  </div>
+                  <div className="olistc-detail-subname">
+                    {orderDetail?.fullname}
+                  </div>
+                  <div className="olistc-detail-subname">
+                    Warehouse {orderDetail?.orderitems[0]?.warehouse_id}
+                  </div>
+                </>
+                <div className="olistc-detail-bottom">
+                  {orderDetail?.status_detail === 2 ||
+                  orderDetail?.status_detail === 3 ||
+                  orderDetail?.status_detail === 4 ||
+                  orderDetail?.status_detail === 6
+                  ? null : (
+                    <>
+                      <Button
+                        sx={{
+                          borderRadius: "20px",
+                          backgroundColor: "white",
+                          color: "red",
+                          fontSize: "8px",
+                          fontFamily: "Lora",
+                        }}
+                        variant="contained"
+                        onClick={() => {
+                          handleClickOpenCancel();
+                          isCanceled(index);
+                        }}
+                        className="olistc-detail-bottom-track"
+                      >
+                        Cancel
+                      </Button>
+                      <Dialog
+                        open={openC}
+                        onClose={handleCloseCancel}
+                        aria-labelledby="alert-dialog-title"
+                        aria-describedby="alert-dialog-description"
+                      >
+                        <DialogTitle id="alert-dialog-title">
+                          {"Cancel this order"}
+                        </DialogTitle>
+                        <DialogContent>
+                          <DialogContentText id="alert-dialog-description">
+                            Are you sure ?
+                          </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                          <Button onClick={handleCloseCancel}>No</Button>
+                          <Button
+                            onClick={() => {
+                              handleCloseCancel();
+                              cancelOrder(orderCheck[cancelIndex]?.id);
+                            }}
+                            autoFocus
+                          >
+                            {console.log(orderDetail?.id)}
+                            Yes
+                          </Button>
+                        </DialogActions>
+                      </Dialog>
+                    </>
+                  )}
+
+                  <Link
+                    to={{
+                      pathname: `/my-order-detail/${userUID}/${orderDetail?.id}`,
                     }}
-                    variant="contained"
-                    className="olistc-detail-bottom-track">
-                    Detail
-                  </Button>
-                </Link>
+                  >
+                    <Button
+                      sx={{
+                        borderRadius: "20px",
+                        backgroundColor: "black",
+                        fontSize: "8px",
+                        fontFamily: "Lora",
+                      }}
+                      variant="contained"
+                      className="olistc-detail-bottom-track"
+                    >
+                      Detail
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
-          </div>
-        </>
+          </>
+        ))}
       </>
     );
   };
 
   return (
-    <Container maxWidth="xs" sx={{ backgroundColor: 'white' }}>
+    <Container maxWidth="xs" sx={{ backgroundColor: "white" }}>
       <div className="orderlist-main">
         <div className="orderlist-banner">
           <div className="orderlist-banner-logo">
@@ -295,9 +456,9 @@ function MyOrder() {
             <>
               <ClickAwayListener onClickAway={isSearchHandleClose}>
                 <InputBase
-                  sx={{ ml: 1, flex: 1, fontFamily: 'Lora' }}
+                  sx={{ ml: 1, flex: 1, fontFamily: "Lora" }}
                   placeholder="Order ID"
-                  inputProps={{ 'aria-label': 'Search' }}
+                  inputProps={{ "aria-label": "Search" }}
                   className="orderlist-search"
                   endAdornment={
                     <InputAdornment position="end">
@@ -324,21 +485,31 @@ function MyOrder() {
             <PopupState variant="popover" popupId="demo-popup-menu">
               {(popupState) => (
                 <React.Fragment>
-                  <button className="account-button" variant="contained" {...bindTrigger(popupState)}>
+                  <button
+                    className="account-button"
+                    variant="contained"
+                    {...bindTrigger(popupState)}
+                  >
                     <IconButton>
                       <SortTwoTone />
                     </IconButton>
                   </button>
                   <Menu {...bindMenu(popupState)}>
-                    <MenuItem onClick={popupState.close} sx={{ fontFamily: 'Lora' }}>
+                    <MenuItem
+                      onClick={popupState.close}
+                      sx={{ fontFamily: "Lora" }}
+                    >
                       <img src="https://img.icons8.com/fluency-systems-filled/22/null/sort-numeric-up.png" />
                       Oldest
                     </MenuItem>
-                    <MenuItem onClick={popupState.close} sx={{ fontFamily: 'Lora' }}>
+                    <MenuItem
+                      onClick={popupState.close}
+                      sx={{ fontFamily: "Lora" }}
+                    >
                       <img src="https://img.icons8.com/windows/24/null/sort-numeric-up-reversed.png" />
                       Recent
                     </MenuItem>
-                    {userData === 'admin' ? (
+                    {userData?.role === "admin" ? (
                       <>
                         <MenuItem>
                           <img src="https://img.icons8.com/ios/24/null/garage-closed.png" />
@@ -367,82 +538,56 @@ function MyOrder() {
         </div>
 
         <div className="orderlist-tab">
-          <Box sx={{ width: '100%', typography: 'body1' }}>
+          <Box sx={{ width: "100%", typography: "body1" }}>
             <TabContext value={activeTab}>
-              <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                <TabList onChange={handleChange} aria-label="lab API tabs example">
-                  <Tab sx={{ marginLeft: '20px', fontFamily: 'Lora' }} label="On Going" value="1" />
-                  <Tab sx={{ marginLeft: '100px', fontFamily: 'Lora' }} label="Completed" value="2" />
+              <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                <TabList
+                  onChange={handleChange}
+                  aria-label="lab API tabs example"
+                >
+                  <Tab
+                    sx={{ marginLeft: "20px", fontFamily: "Lora" }}
+                    label="On Going"
+                    value="1"
+                  />
+                  <Tab
+                    sx={{ marginLeft: "100px", fontFamily: "Lora" }}
+                    label="Completed"
+                    value="2"
+                  />
                 </TabList>
               </Box>
-              <>
-                {orderDetails?.map((orderDetail) => (
-                  <>
-                    {orderDetail.status ? (
-                      <TabPanel value="1">
-                        <div className="orderlist-og">
-                          <img
-                            src="https://i.pinimg.com/originals/6f/df/bc/6fdfbc41d6a8e26d4b9073bc1afd899f.jpg"
-                            className="orderlist-og-logo"
-                            alt="No Order"
-                          />
-                          <div className="orderlist-og-text-1">You don't have an order yet</div>
-                          <div className="orderlist-og-text-2">You don't have On Going orders at this time</div>
-                        </div>
-                      </TabPanel>
-                    ) : (
-                      <TabPanel>
-                        {orderListCard()}
+              <TabPanel value="1">
+                {orderListCard(1)}
 
-                        <Stack
-                          spacing={1}
-                          sx={{
-                            position: 'fixed',
-                            top: '78%',
-                            width: '110%',
-                            fontFamily: 'Lora',
-                          }}>
-                          <Pagination count={10} />
-                        </Stack>
-                      </TabPanel>
-                    )}
-                  </>
-                ))}
-              </>
-              <>
-                {orderDetails?.map((orderDetail) => (
-                  <>
-                    {orderDetail.status ? (
-                      <TabPanel value="2">
-                        {orderListCard()}
+                <div className="pagination-wrapper">
+                  <button className="button-page" onClick={prevPageHandler}>
+                    {"<"}
+                  </button>
+                  <div className="page-numbering">
+                    {page} of {maxPage}
+                  </div>
+                  <button className="button-page" onClick={nextPageHandler}>
+                    {">"}
+                  </button>
+                </div>
+              </TabPanel>
 
-                        <Stack
-                          spacing={1}
-                          sx={{
-                            position: 'fixed',
-                            top: '78%',
-                            width: '110%',
-                            fontFamily: 'Lora',
-                          }}>
-                          <Pagination count={10} />
-                        </Stack>
-                      </TabPanel>
-                    ) : (
-                      <TabPanel value="2">
-                        <div className="orderlist-og">
-                          <img
-                            src="https://i.pinimg.com/originals/6f/df/bc/6fdfbc41d6a8e26d4b9073bc1afd899f.jpg"
-                            className="orderlist-og-logo"
-                            alt="No Order"
-                          />
-                          <div className="orderlist-og-text-1">You don't have an order yet</div>
-                          <div className="orderlist-og-text-2">You don't have Completed orders at this time</div>
-                        </div>
-                      </TabPanel>
-                    )}
-                  </>
-                ))}
-              </>
+              <TabPanel value="2">
+                {orderListCard(2)}
+
+                <div className="pagination-wrapper">
+                  <button className="button-page" onClick={prevPageHandler}>
+                    {"<"}
+                  </button>
+                  <div className="page-numbering">
+                    {page} of {maxPage}
+                  </div>
+                  <button className="button-page" onClick={nextPageHandler}>
+                    {">"}
+                  </button>
+                </div>
+              </TabPanel>
             </TabContext>
           </Box>
         </div>

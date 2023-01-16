@@ -119,3 +119,23 @@ body {
   font-size: 8px;
   padding: 6px;
 }
+
+.pagination-wrapper{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+
+.button-page{
+  border: none;
+  background-color: transparent;
+  color:gray
+}
+
+.button-page:hover{
+  cursor: pointer;
+  color: lightgray;
+  border-radius: 50%;
+  border: 1px solid lightgray
+}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import Axios from 'axios';
 import {
   IconButton,
@@ -22,21 +23,27 @@ import {
   DialogActions,
   FormControl,
   InputLabel,
-} from '@mui/material';
-import { MoreHoriz, NoteAdd, Search, SortTwoTone, Inventory } from '@mui/icons-material';
-import { TabPanel, TabList, TabContext } from '@mui/lab';
-import PopupState, { bindTrigger, bindMenu } from 'material-ui-popup-state';
+} from "@mui/material";
+import {
+  MoreHoriz,
+  NoteAdd,
+  Search,
+  SortTwoTone,
+  Inventory,
+} from "@mui/icons-material";
+import { TabPanel, TabList, TabContext } from "@mui/lab";
+import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
 
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
-import '../../assets/styles/StockMutation.css';
+import "../../assets/styles/StockMutation.css";
 
 class StockMutation extends React.Component {
   state = {
-    value: 'auto',
-    status: '',
+    value: "auto",
+    status: "",
     isSearch: false,
-    isAdmin: true,
+    isrole: {},
     setAdd: false,
     askFrom: 0,
     askTo: 0,
@@ -45,16 +52,24 @@ class StockMutation extends React.Component {
     setOpenA: false,
     setOpenR: false,
     mutationList: [],
+    whList: [],
     page: 0,
     pages: 0,
     sort: '',
     search: '',
     filter: 'manual',
-    myWarehouse: '3',
+    myWarehouse: '',
   };
 
   componentDidMount() {
-    this.fetchMutation(0, '', '', this.state.value);
+    this.getWh();
+    this.userCheck();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (prevProps.user_id === null && this.props.user_id) {
+      this.userCheck();
+    }
   }
 
   inputHandler = (event) => {
@@ -66,7 +81,7 @@ class StockMutation extends React.Component {
 
   handleChange = (event, value) => {
     this.setState({ ...this.state, value });
-    this.fetchMutation(0, '', '', value);
+    this.fetchMutation(0, '', '', value, this.state.myWarehouse);
   };
 
   isSearchHandle = () => {
@@ -85,20 +100,48 @@ class StockMutation extends React.Component {
     this.setState({ ...this.state, setAdd: false });
   };
 
+  userCheck = () => {
+    const userUID = this.props.user_id;
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/customer/profile/${userUID}`)
+      .then((res) => {
+        this.setState({ ...this.state, isrole: res.data });
+        if (res.data.approle.role === 'superadmin') {
+          this.setState({ ...this.state, myWarehouse: '' });
+        } else if (res.data.approle.warehouse_id) {
+          this.setState({ ...this.state, myWarehouse: res.data.approle.warehouse_id.toString() });
+        }
+        this.fetchMutation(0, '', '', this.state.value, this.state.myWarehouse);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  // GET WH
+  getWh = () => {
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/product/get-wh`)
+      .then((result) => {
+        this.setState({ ...this.state, whList: result.data });
+      })
+      .catch((err) => {
+        alert('Terjadi kesalahan di server');
+      });
+  };
+
   askMutation = (from, to, product, quantity) => {
-    Axios.post(`http://localhost:3300/api/product/stock-mutation`, {
+    Axios.post(`${process.env.REACT_APP_API_BASE_URL}/product/stock-mutation`, {
       from,
       to,
       product,
       quantity: parseInt(quantity),
     })
       .then((data) => {
-        alert('Permintaan mutasi stok berhasil dibuat');
+        alert("Permintaan mutasi stok berhasil dibuat");
         this.setState({ ...this.state, setAdd: false });
-        this.fetchMutation(0, '', '', this.state.value);
+        this.fetchMutation(0, '', '', this.state.value, this.state.myWarehouse);
       })
       .catch((error) => {
-        alert('gagal');
+        alert("gagal");
       });
   };
 
@@ -127,29 +170,36 @@ class StockMutation extends React.Component {
   };
 
   respondMutation = (mutation, respond) => {
-    Axios.patch(`http://localhost:3300/api/product/stock-mutation`, { mutation, respond })
+    Axios.patch(
+      `${process.env.REACT_APP_API_BASE_URL}/product/stock-mutation`,
+      { mutation, respond }
+    )
       .then((data) => {
         if (!data.data.message) {
-          if (respond === ' reject') {
-            alert('Mutasi berhasil ditolak!');
+          if (respond === " reject") {
+            alert("Mutasi berhasil ditolak!");
           } else {
-            alert('Mutasi berhasil!');
+            alert("Mutasi berhasil!");
           }
         } else {
           alert(data.data.message);
         }
-        this.fetchMutation(0, '', '', this.state.value);
+        this.fetchMutation(0, '', '', this.state.value, this.state.myWarehouse);
       })
       .catch((error) => {
-        alert('Mutasi gagal!');
+        alert("Mutasi gagal!");
       });
   };
 
   fetchMutation = (page, sort, search, filter, mywh) => {
     Axios.get(
-      `http://localhost:3300/api/product/get-mutation?page=${page}&sort=${sort ? sort : this.state.sort}&search=${
-        search ? search : this.state.search
-      }&filter=${filter ? filter : this.state.value}&mywh=${this.state.myWarehouse}`
+      `${
+        process.env.REACT_APP_API_BASE_URL
+      }/product/get-mutation?page=${page}&sort=${
+        sort ? sort : this.state.sort
+      }&search=${search ? search : this.state.search}&filter=${
+        filter ? filter : this.state.value
+      }&mywh=${this.state.myWarehouse}`
     )
       .then((result) => {
         this.setState({
@@ -161,26 +211,35 @@ class StockMutation extends React.Component {
         });
       })
       .catch(() => {
-        alert('Terjadi kesalahan di server');
+        alert("Terjadi kesalahan di server");
       });
   };
 
   mutationDetailStatus = (status) => {
-    if (status === 'waiting') {
+    if (status === "waiting") {
       return (
-        <Box className="mutation-detail-status-1" sx={{ backgroundColor: 'rgb(255,165,0,0.4)' }}>
+        <Box
+          className="mutation-detail-status-1"
+          sx={{ backgroundColor: "rgb(255,165,0,0.4)" }}
+        >
           Waiting
         </Box>
       );
-    } else if (status === 'done') {
+    } else if (status === "done") {
       return (
-        <Box className="mutation-detail-status-1" sx={{ backgroundColor: 'rgb(72,209,204,0.4)' }}>
+        <Box
+          className="mutation-detail-status-1"
+          sx={{ backgroundColor: "rgb(72,209,204,0.4)" }}
+        >
           Done
         </Box>
       );
-    } else if (status === 'canceled') {
+    } else if (status === "canceled") {
       return (
-        <Box className="mutation-detail-status-1" sx={{ backgroundColor: 'rgb(220,20,60,0.4)' }}>
+        <Box
+          className="mutation-detail-status-1"
+          sx={{ backgroundColor: "rgb(220,20,60,0.4)" }}
+        >
           Canceled
         </Box>
       );
@@ -189,110 +248,105 @@ class StockMutation extends React.Component {
 
   mutationCard = () => {
     return this.state.mutationList.map((val, index) => {
-      let picPathArray = val.product_picture.split('/');
-      let picPath = 'http://localhost:3300/' + picPathArray[1] + '/' + picPathArray[2];
+      let picPathArray = val.product_picture.split("\\");
+      let picPath =
+        "http://localhost:8000/" + picPathArray[1] + "/" + picPathArray[2];
       let productPicture = picPath;
-      if (this.state.myWarehouse !== val.warehouse_id && this.state.myWarehouse !== val.requester) {
-        return null;
-      } else {
-        return (
-          <div className="mutation-main">
-            <div className="mutation-image">
-              <img src={productPicture} className="mutation-product" alt="Product" />
-            </div>
-            <div className="mutation-detail">
-              <div className="mutation-detail-name">{val.product_name}</div>
-              <div className="mutation-detail-subname">Product ID: {val.product_id}</div>
-              <div className="mutation-detail-subname">From: WH00{val.warehouse_id}</div>
-              <div className="mutation-detail-subname">Qty: {val.quantity} pcs</div>
-              <div className="mutation-detail-subname">To: WH00{val.requester}</div>
-              {this.mutationDetailStatus(val.status)}
-
-              {this.state.value === 'auto' ||
-              this.state.myWarehouse === val.requester ||
-              val.status === 'done' ||
-              val.status === 'canceled' ? null : (
-                <>
-                  <div className="mutation-detail-bottom">
-                    <div>
-                      <Button
-                        sx={{
-                          borderRadius: '20px',
-                          backgroundColor: 'rgba(127, 255, 212, 0.4)',
-                          fontSize: '8px',
-                          fontFamily: 'Lora',
-                          color: 'black',
-                        }}
-                        onClick={this.handleClickOpenAccept}
-                        variant="contained"
-                        className="mutation-detail-bottom-track">
-                        Accept
-                      </Button>
-                      <Dialog
-                        open={this.state.setOpenA}
-                        onClose={this.handleCloseAccept}
-                        aria-labelledby="alert-dialog-title"
-                        aria-describedby="alert-dialog-description">
-                        <DialogTitle id="alert-dialog-title">{'Accept mutation request'}</DialogTitle>
-                        <DialogContent>
-                          <DialogContentText id="alert-dialog-description">Are you sure ?</DialogContentText>
-                        </DialogContent>
-                        <DialogActions>
-                          <Button onClick={this.handleCloseAccept}>No</Button>
-                          <Button
-                            onClick={() => {
-                              console.log('val id', val.id);
-                              this.respondMutation(val.id, 'accept');
-                            }}
-                            autoFocus>
-                            Yes
-                          </Button>
-                        </DialogActions>
-                      </Dialog>
-                    </div>
-                    <div>
-                      <Button
-                        sx={{
-                          borderRadius: '20px',
-                          backgroundColor: 'rgb(220,20,60,0.4)',
-                          fontSize: '8px',
-                          fontFamily: 'Lora',
-                          color: 'black',
-                        }}
-                        onClick={this.handleClickOpenReject}
-                        variant="contained"
-                        className="mutation-detail-bottom-track">
-                        Reject
-                      </Button>
-                      <Dialog
-                        open={this.state.setOpenR}
-                        onClose={this.handleCloseReject}
-                        aria-labelledby="alert-dialog-title"
-                        aria-describedby="alert-dialog-description">
-                        <DialogTitle id="alert-dialog-title">{'Reject mutation request'}</DialogTitle>
-                        <DialogContent>
-                          <DialogContentText id="alert-dialog-description">Are you sure ?</DialogContentText>
-                        </DialogContent>
-                        <DialogActions>
-                          <Button onClick={this.handleCloseReject}>No</Button>
-                          <Button
-                            onClick={() => {
-                              console.log('val id', val.id);
-                              this.respondMutation(val.id, 'reject');
-                            }}
-                            autoFocus>
-                            Yes
-                          </Button>
-                        </DialogActions>
-                      </Dialog>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+      return (
+        <div className="mutation-main">
+          <div className="mutation-image">
+            <img src={productPicture} className="mutation-product" alt="Product" />
           </div>
-        );
-      }
+          <div className="mutation-detail">
+            <div className="mutation-detail-name">{val.product_name}</div>
+            <div className="mutation-detail-subname">Product ID: {val.product_id}</div>
+            <div className="mutation-detail-subname">From: WH00{val.warehouse_id}</div>
+            <div className="mutation-detail-subname">Qty: {val.quantity} pcs</div>
+            <div className="mutation-detail-subname">To: WH00{val.requester}</div>
+            {this.mutationDetailStatus(val.status)}
+
+            {this.state.value === 'auto' ||
+            this.state.myWarehouse === val.requester ||
+            val.status === 'done' ||
+            val.status === 'canceled' ? null : (
+              <>
+                <div className="mutation-detail-bottom">
+                  <div>
+                    <Button
+                      sx={{
+                        borderRadius: '20px',
+                        backgroundColor: 'rgba(127, 255, 212, 0.4)',
+                        fontSize: '8px',
+                        fontFamily: 'Lora',
+                        color: 'black',
+                      }}
+                      onClick={this.handleClickOpenAccept}
+                      variant="contained"
+                      className="mutation-detail-bottom-track">
+                      Accept
+                    </Button>
+                    <Dialog
+                      open={this.state.setOpenA}
+                      onClose={this.handleCloseAccept}
+                      aria-labelledby="alert-dialog-title"
+                      aria-describedby="alert-dialog-description">
+                      <DialogTitle id="alert-dialog-title">{'Accept mutation request'}</DialogTitle>
+                      <DialogContent>
+                        <DialogContentText id="alert-dialog-description">Are you sure ?</DialogContentText>
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={this.handleCloseAccept}>No</Button>
+                        <Button
+                          onClick={() => {
+                            this.respondMutation(val.id, 'accept');
+                          }}
+                          autoFocus>
+                          Yes
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
+                  </div>
+                  <div>
+                    <Button
+                      sx={{
+                        borderRadius: '20px',
+                        backgroundColor: 'rgb(220,20,60,0.4)',
+                        fontSize: '8px',
+                        fontFamily: 'Lora',
+                        color: 'black',
+                      }}
+                      onClick={this.handleClickOpenReject}
+                      variant="contained"
+                      className="mutation-detail-bottom-track">
+                      Reject
+                    </Button>
+                    <Dialog
+                      open={this.state.setOpenR}
+                      onClose={this.handleCloseReject}
+                      aria-labelledby="alert-dialog-title"
+                      aria-describedby="alert-dialog-description">
+                      <DialogTitle id="alert-dialog-title">{'Reject mutation request'}</DialogTitle>
+                      <DialogContent>
+                        <DialogContentText id="alert-dialog-description">Are you sure ?</DialogContentText>
+                      </DialogContent>
+                      <DialogActions>
+                        <Button onClick={this.handleCloseReject}>No</Button>
+                        <Button
+                          onClick={() => {
+                            this.respondMutation(val.id, 'reject');
+                          }}
+                          autoFocus>
+                          Yes
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      );
     });
   };
 
@@ -301,7 +355,11 @@ class StockMutation extends React.Component {
       <PopupState variant="popover" popupId="demo-popup-menu">
         {(popupState) => (
           <React.Fragment>
-            <button className="account-button" variant="contained" {...bindTrigger(popupState)}>
+            <button
+              className="account-button"
+              variant="contained"
+              {...bindTrigger(popupState)}
+            >
               <IconButton>
                 <MoreHoriz />
               </IconButton>
@@ -318,22 +376,34 @@ class StockMutation extends React.Component {
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link to="/warehouse-management" className="userlist-banner-menu-link">
+                <Link
+                  to="/warehouse-management"
+                  className="userlist-banner-menu-link"
+                >
                   Warehouse Mng.
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link to="/products-management-list" className="userlist-banner-menu-link">
+                <Link
+                  to="/products-management-list"
+                  className="userlist-banner-menu-link"
+                >
                   Product List
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link to="/products-management-category" className="userlist-banner-menu-link">
+                <Link
+                  to="/products-management-category"
+                  className="userlist-banner-menu-link"
+                >
                   Product Category
                 </Link>
               </MenuItem>
               <MenuItem>
-                <Link to="/stock-mutation" className="userlist-banner-menu-link">
+                <Link
+                  to="/stock-mutation"
+                  className="userlist-banner-menu-link"
+                >
                   Stock Mutation
                 </Link>
               </MenuItem>
@@ -362,7 +432,7 @@ class StockMutation extends React.Component {
   render() {
     return (
       <>
-        <Container maxWidth="xs" sx={{ backgroundColor: 'white' }}>
+        <Container maxWidth="xs" sx={{ backgroundColor: "white" }}>
           <div className="stockmutation-main">
             <div className="stockmutation-banner">
               <div className="stockmutation-banner-logo">
@@ -374,12 +444,17 @@ class StockMutation extends React.Component {
                 <>
                   <ClickAwayListener onClickAway={this.isSearchHandleClose}>
                     <InputBase
-                      sx={{ ml: 1, flex: 1, fontFamily: 'Lora' }}
+                      sx={{ ml: 1, flex: 1, fontFamily: "Lora" }}
                       placeholder="Product ID"
-                      inputProps={{ 'aria-label': 'Search' }}
+                      inputProps={{ "aria-label": "Search" }}
                       className="stockmutation-search"
                       endAdornment={
-                        <InputAdornment position="end" onClick={() => this.fetchMutation(0, '', this.state.search)}>
+                        <InputAdornment
+                          position="end"
+                          onClick={() =>
+                            this.fetchMutation(0, "", this.state.search)
+                          }
+                        >
                           <IconButton edge="end">
                             <Search />
                           </IconButton>
@@ -390,7 +465,9 @@ class StockMutation extends React.Component {
                 </>
               ) : (
                 <>
-                  <div className="stockmutation-banner-text">Stock Mutation</div>
+                  <div className="stockmutation-banner-text">
+                    Stock Mutation
+                  </div>
                   <div className="stockmutation-banner-search">
                     <IconButton onClick={this.isSearchHandle}>
                       <Search />
@@ -402,7 +479,11 @@ class StockMutation extends React.Component {
                 <PopupState variant="popover" popupId="demo-popup-menu">
                   {(popupState) => (
                     <React.Fragment>
-                      <button className="account-button" variant="contained" {...bindTrigger(popupState)}>
+                      <button
+                        className="account-button"
+                        variant="contained"
+                        {...bindTrigger(popupState)}
+                      >
                         <IconButton>
                           <SortTwoTone />
                         </IconButton>
@@ -410,20 +491,28 @@ class StockMutation extends React.Component {
                       <Menu {...bindMenu(popupState)}>
                         <MenuItem
                           onClick={() => {
-                            this.fetchMutation(0, 'ASC', '');
+                            this.fetchMutation(0, "ASC", "");
                             this.setState({ ...this.state, page: 0 });
                           }}
-                          sx={{ fontFamily: 'Lora' }}>
-                          <img src="https://img.icons8.com/fluency-systems-filled/22/null/sort-numeric-up.png" alt="" />
+                          sx={{ fontFamily: "Lora" }}
+                        >
+                          <img
+                            src="https://img.icons8.com/fluency-systems-filled/22/null/sort-numeric-up.png"
+                            alt=""
+                          />
                           Oldest
                         </MenuItem>
                         <MenuItem
                           onClick={() => {
-                            this.fetchMutation(0, 'DESC', '');
+                            this.fetchMutation(0, "DESC", "");
                             this.setState({ ...this.state, page: 0 });
                           }}
-                          sx={{ fontFamily: 'Lora' }}>
-                          <img src="https://img.icons8.com/windows/24/null/sort-numeric-up-reversed.png" alt="" />
+                          sx={{ fontFamily: "Lora" }}
+                        >
+                          <img
+                            src="https://img.icons8.com/windows/24/null/sort-numeric-up-reversed.png"
+                            alt=""
+                          />
                           Recent
                         </MenuItem>
                       </Menu>
@@ -440,122 +529,145 @@ class StockMutation extends React.Component {
                   open={this.state.setAdd}
                   onClose={this.addClose}
                   aria-labelledby="modal-modal-title"
-                  aria-describedby="modal-modal-description">
+                  aria-describedby="modal-modal-description"
+                >
                   <Box
                     sx={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
                       width: 400,
-                      bgcolor: 'background.paper',
-                      border: '2px solid #000',
+                      bgcolor: "background.paper",
+                      border: "2px solid #000",
                       boxShadow: 24,
                       p: 4,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                    }}>
-                    <FormControl sx={{ width: '200px', marginBottom: '15px' }}>
-                      <InputLabel id="demo-multiple-name-label">From</InputLabel>
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                    }}
+                  >
+                    <FormControl sx={{ width: "200px", marginBottom: "15px" }}>
+                      <InputLabel id="demo-multiple-name-label">
+                        From
+                      </InputLabel>
                       <Select
                         labelId="demo-simple-select-label"
                         id="demo-simple-select"
                         value={this.state.askFrom}
                         className="apc-card-icon-select"
-                        onChange={this.handleAskFromChange}>
+                        onChange={this.handleAskFromChange}
+                      >
                         <MenuItem value={0}>
                           <em>From</em>
                         </MenuItem>
-                        <MenuItem value={1}>Warehouse 1</MenuItem>
-                        <MenuItem value={2}>Warehouse 2</MenuItem>
-                        <MenuItem value={3}>Warehouse 3</MenuItem>
+                        {this.state.whList.map((val, index) => {
+                          return (
+                            <MenuItem value={this.state.whList[index]}>Warehouse {this.state.whList[index]}</MenuItem>
+                          );
+                        })}
                       </Select>
                     </FormControl>
-                    <FormControl sx={{ width: '200px' }}>
+                    <FormControl sx={{ width: "200px" }}>
                       <InputLabel id="demo-multiple-name-label">To</InputLabel>
                       <Select
                         labelId="demo-simple-select-label"
                         id="demo-simple-select"
                         value={this.state.askTo}
                         className="apc-card-icon-select"
-                        onChange={this.handleAskToChange}>
+                        onChange={this.handleAskToChange}
+                      >
                         <MenuItem value={0}>
                           <em>To</em>
                         </MenuItem>
-                        {/* THE RIGHT */}
-                        {/* <MenuItem value={this.state.myWarehouse}>Warehouse {this.state.myWarehouse}</MenuItem> */}
-                        {/* THE TEST */}
-                        <MenuItem value={1}>Warehouse 1</MenuItem>
-                        <MenuItem value={2}>Warehouse 2</MenuItem>
-                        <MenuItem value={3}>Warehouse 3</MenuItem>
+                        {this.state.whList.map((val, index) => {
+                          return (
+                            <MenuItem value={this.state.whList[index]}>Warehouse {this.state.whList[index]}</MenuItem>
+                          );
+                        })}
                       </Select>
                     </FormControl>
                     <InputBase
                       sx={{
-                        border: '1px solid grey',
-                        backgroundColor: 'white',
-                        width: '200px',
-                        paddingLeft: '10px',
+                        border: "1px solid grey",
+                        backgroundColor: "white",
+                        width: "200px",
+                        paddingLeft: "10px",
                       }}
                       placeholder="Product ID"
                       name="productValue"
-                      inputProps={{ 'aria-label': 'Search' }}
+                      inputProps={{ "aria-label": "Search" }}
                       className="apc-card-input"
                       onChange={this.inputHandler}
                     />
                     <InputBase
                       sx={{
-                        border: '1px solid grey',
-                        backgroundColor: 'white',
-                        width: '200px',
-                        paddingLeft: '10px',
+                        border: "1px solid grey",
+                        backgroundColor: "white",
+                        width: "200px",
+                        paddingLeft: "10px",
                       }}
                       placeholder="Amount"
                       name="quantityValue"
-                      inputProps={{ 'aria-label': 'Search' }}
+                      inputProps={{ "aria-label": "Search" }}
                       className="apc-card-input"
                       onChange={this.inputHandler}
                     />
 
                     <Button
                       sx={{
-                        borderRadius: '20px',
-                        backgroundColor: 'rgb(153,255,255,0.9)',
-                        fontSize: '8px',
-                        fontFamily: 'Lora',
-                        color: 'black',
-                        marginLeft: '5px',
+                        borderRadius: "20px",
+                        backgroundColor: "rgb(153,255,255,0.9)",
+                        fontSize: "8px",
+                        fontFamily: "Lora",
+                        color: "black",
+                        marginLeft: "5px",
                       }}
                       variant="contained"
                       className="apc-card-edit"
                       onClick={() => {
                         if (this.state.askFrom !== this.state.askTo) {
-                          this.askMutation(
-                            this.state.askFrom,
-                            this.state.askTo,
-                            this.state.productValue,
-                            this.state.quantityValue
-                          );
+                            this.askMutation(
+                              this.state.askFrom,
+                              this.state.askTo,
+                              this.state.productValue,
+                              this.state.quantityValue
+                            );
                         } else {
-                          alert('Warehouse From dan Warehouse To tidak boleh sama!');
+                          alert(
+                            "Warehouse From dan Warehouse To tidak boleh sama!"
+                          );
                         }
-                      }}>
+                      }}
+                    >
                       Ask
                     </Button>
                   </Box>
                 </Modal>
               </div>
-              <div className="stockmutation-banner-menu">{this.menuHandler()}</div>
+              <div className="stockmutation-banner-menu">
+                {this.menuHandler()}
+              </div>
             </div>
 
             <div className="stockmutation-tab">
-              <Box sx={{ width: '100%', typography: 'body1' }}>
+              <Box sx={{ width: "100%", typography: "body1" }}>
                 <TabContext value={this.state.value}>
-                  <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                    <TabList onChange={this.handleChange} aria-label="lab API tabs example">
-                      <Tab sx={{ marginLeft: '0px', fontFamily: 'Lora' }} label="Sales (Auto)" value="auto" />
-                      <Tab sx={{ marginLeft: '120px', fontFamily: 'Lora' }} label="WH (Manual)" value="manual" />
+                  <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                    <TabList
+                      onChange={this.handleChange}
+                      aria-label="lab API tabs example"
+                    >
+                      <Tab
+                        sx={{ marginLeft: "0px", fontFamily: "Lora" }}
+                        label="Sales (Auto)"
+                        value="auto"
+                      />
+                      <Tab
+                        sx={{ marginLeft: "120px", fontFamily: "Lora" }}
+                        label="WH (Manual)"
+                        value="manual"
+                      />
                     </TabList>
                   </Box>
 
@@ -568,20 +680,21 @@ class StockMutation extends React.Component {
           </div>
         </Container>
 
-        <Container maxWidth="xs" className="mobile2" sx={{ marginTop: '5px' }}>
+        <Container maxWidth="xs" className="mobile2" sx={{ marginTop: "5px" }}>
           <Stack
             spacing={1}
             sx={{
-              width: '110%',
-              fontFamily: 'Lora',
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-around',
-            }}>
+              width: "110%",
+              fontFamily: "Lora",
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-around",
+            }}
+          >
             <Pagination
               count={this.state.pages}
               onChange={(e, value) => {
-                this.fetchMutation(value - 1, this.state.sort, '');
+                this.fetchMutation(value - 1, this.state.sort, "");
               }}
             />
           </Stack>
@@ -591,4 +704,12 @@ class StockMutation extends React.Component {
   }
 }
 
-export default StockMutation;
+const mapStateToProps = (state) => {
+  return {
+    isLoggedIn: state.auth.isLoggedIn,
+    user: state.auth.user,
+    user_id: state.auth.user_id,
+  };
+};
+
+export default connect(mapStateToProps)(StockMutation);

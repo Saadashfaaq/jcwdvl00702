@@ -25,13 +25,6 @@ function SignUp() {
   let history = useHistory();
   const dispatch = useDispatch();
 
-  // const isLoggedIn = useSelector((state) => state.auth.isLoggedIn);
-  // useEffect(() => {
-  //   if (!isLoggedIn) {
-  //     history.push('/');
-  //   }
-  // });
-
   const [isCheck, setIscheck] = useState(true);
   const changeIsCheck = () => {
     setIscheck(!isCheck);
@@ -45,7 +38,11 @@ function SignUp() {
       password: 'dummyPassword',
     },
     validationSchema: Yup.object().shape({
-      email: Yup.string().required('your email is invalid').email('format yang dimasukan bukan email'),
+      email: Yup.string().required('Please fill your email').email('Email format invalid'),
+      fullname: Yup.string()
+        .required('Please fill your fullname')
+        .matches(/^([A-Za-z\u00C0-\u00D6\u00D8-\u00f6\u00f8-\u00ff\s]*)$/gi, 'Name can only contain Latin letters.')
+        .matches(/^\s*[\S]+(\s[\S]+)+\s*$/gms, 'Please enter your full name.'),
     }),
     validateOnChange: false,
     onSubmit: async (values) => {
@@ -65,33 +62,26 @@ function SignUp() {
                     user: user.user.providerData[0],
                     id: user.user.id,
                   };
-
                   dispatch(loginUser(data));
                 })
                 .catch((err) => {
                   console.log(err);
                 });
               alert('Mohon verifikasi email anda');
-              history.push('/create-password');
             })
             .catch((error) => {
               alert(error.message);
             });
 
           var user = res.user;
-          console.log('cek data user', user);
           const data = {
             email: values.email,
             fullname: values.fullname,
             password: values.password,
             is_verified: user.emailVerified,
             customer_uid: user.uid,
+            // social_login: user.providerData[0].providerId,
           };
-          const reduxData = {
-            user: user.providerData[0],
-            id: user.uid,
-          };
-          console.log(reduxData);
           return data;
         })
         .catch((err) => {
@@ -105,20 +95,34 @@ function SignUp() {
           // ...
         })
         .then((data) => {
-          Axios.post('http://localhost:3300/api/customer/register', data)
-            .then(() => {
-              return;
+          Axios.post(`${process.env.REACT_APP_API_BASE_URL}/customer/approle`, {
+            customer_uid: data.customer_uid,
+            role: 'user',
+            warehouse_id: 0,
+          })
+            .then((res) => {
+              Axios.post(`${process.env.REACT_APP_API_BASE_URL}/customer/register`, {
+                email: data.email,
+                fullname: data.fullname,
+                password: data.password,
+                is_verified: data.is_verified,
+                customer_uid: data.customer_uid,
+              })
+                .then(() => {
+                  alert('Mohon verifikasi email anda');
+                  history.push('/create-password');
+                })
+                .catch((error) => {
+                  console.log(error);
+                });
             })
-            .catch((error) => {
-              console.log(error);
-              alert(error);
+            .catch((err) => {
+              console.log(err);
             });
-          // dispatch(loginUser(reduxData))
         });
     },
   });
 
-  // masuk melalui Google//
 
   const handleLoginWithGoogle = async () => {
     firebaseAuthentication
@@ -130,16 +134,17 @@ function SignUp() {
         // This gives you a Google Access Token. You can use it to access the Google API.
         var token = credential.accessToken;
         // The signed-in user info.
-        var user = result.user;
 
-        const data = {
-          email: user.email,
-          fullname: user.displayName,
+        var user = result.user;
+        const data={
+          email: user.providerData[0].email,
+          fullname: user.providerData[0].displayName,
           is_verified: user.emailVerified,
           customer_uid: user.uid,
-        };
-
-        return data;
+        }
+        console.log(data)
+        return data
+        
       })
       .catch((error) => {
         // Handle Errors here.
@@ -152,15 +157,23 @@ function SignUp() {
         // ...
       })
       .then((data) => {
-        console.log('here', data);
-
-        Axios.post('http://localhost:3300/api/customer/register-social', data)
+        console.log(data,'login social')
+        Axios.post(`${process.env.REACT_APP_API_BASE_URL}/customer/approle`, {
+          customer_uid: data.customer_uid,
+          role: 'user',
+          warehouse_id: 0,
+        })
           .then(() => {
-            history.push('/');
+            Axios.post(`${process.env.REACT_APP_API_BASE_URL}/customer/register-social`,data)
+              .then(() => {
+                history.push('/');
+              })
+              .catch((error) => {
+                console.log(error);
+              });
           })
-          .catch((error) => {
-            console.log(error);
-            alert(error);
+          .catch((err) => {
+            console.log(err);
           });
       });
   };
@@ -199,7 +212,7 @@ function SignUp() {
       .then((data) => {
         console.log('here', data);
 
-        Axios.post('http://localhost:3300/api/customer/register-social', data)
+        Axios.post(`${process.env.REACT_APP_API_BASE_URL}/customer/register-social`, data)
           .then(() => {
             history.push('/');
           })
@@ -209,16 +222,6 @@ function SignUp() {
           });
       });
   };
-
-  //   Axios.post('http://localhost:3300/api/customer/register-social', data)
-  //     .then(() => {
-  //       history.push('/');
-  //     })
-  //     .catch((error) => {
-  //       console.log(error);
-  //       alert(error);
-  //     });
-  // };
 
   return (
     <Container maxWidth="xs" sx={{ backgroundColor: 'white' }}>
@@ -238,7 +241,9 @@ function SignUp() {
               }
               placeholder="Email"
             />
+            
           </FormControl>
+          {formik.errors.email ? <div className="alert-danger">{formik.errors.email}</div> : null}
 
           <FormControl variant="standard" className="sign-in-form-input">
             <Input
@@ -253,7 +258,9 @@ function SignUp() {
               }
               placeholder="Full Name"
             />
+            
           </FormControl>
+          {formik.errors.fullname ? <div className="alert-danger">{formik.errors.fullname}</div> : null}
 
           <div className="sign-in-form-check">
             <FormControlLabel

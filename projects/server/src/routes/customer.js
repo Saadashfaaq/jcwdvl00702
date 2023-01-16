@@ -1,5 +1,5 @@
 const {
-  models: { Customer, Address },
+  models: { Customer, Address, Approle },
 } = require('../models');
 const router = require('express').Router();
 const bcrypt = require('bcrypt');
@@ -28,20 +28,41 @@ router.post('/register', async (req, res) => {
       password: hashedPassword,
       is_verified: req.body.is_verified,
       is_banned: false,
-      role: 'user',
       fullname: req.body.fullname,
-      token: '',
-      expired_time: 0,
       picture: '',
       social_login: false,
       customer_uid: req.body.customer_uid,
-      role: 'user',
     });
 
     const customer = await newCustomer.save();
     res.status(200).json(customer);
   } catch (err) {
     res.status(500).json(err);
+  }
+});
+router.post('/approle', async (req, res) => {
+  try {
+    const newRole = new Approle({
+      customer_uid: req.body.customer_uid,
+      role: req.body.role,
+      warehouse_id: req.body.warehouse_id,
+    });
+
+    const roleApp = await newRole.save();
+    res.status(200).json(roleApp);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+//UPDATE APPROLE
+router.put('/update-role/:id', async (req, res) => {
+  const customer_uid = req.params.id;
+  try {
+    await Approle.update(req.body, { where: { customer_uid } });
+    return res.status(200).send({ message: 'updated' });
+  } catch (err) {
+    return res.status(500).json({ message: err.toString() });
   }
 });
 
@@ -88,15 +109,30 @@ router.post('/login', async (req, res) => {
 router.get('/profile/:customer_uid', async (req, res) => {
   try {
     const response = await Customer.findOne({
+      include: [Approle],
       where: {
         customer_uid: req.params.customer_uid,
       },
     });
 
     let picPathArray = response.picture.split('\\');
-    let picPath = 'http://localhost:3300/' + picPathArray[1] + '/' + picPathArray[2];
+    let picPath = 'http://localhost:8000/' + picPathArray[1] + '/' + picPathArray[2];
     response.picture = picPath;
-    // localhost:3300/profileimages/newzealand.jpg
+    // localhost:8000/profileimages/newzealand.jpg
+    res.json(response);
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+// GET ROLE BY ID
+router.get('/get-role/:customer_uid', async (req, res) => {
+  try {
+    const response = await Approle.findOne({
+      where: {
+        customer_uid: req.params.customer_uid,
+      },
+    });
     res.json(response);
   } catch (error) {
     console.log(error);
@@ -173,9 +209,9 @@ router.get('/user/:customer_uid', async (req, res) => {
     });
 
     let picPathArray = response.picture.split('\\');
-    let picPath = 'http://localhost:3300/' + picPathArray[1] + '/' + picPathArray[2];
+    let picPath = 'http://localhost:8000/' + picPathArray[1] + '/' + picPathArray[2];
     response.picture = picPath;
-    // localhost:3300/profileimages/newzealand.jpg
+    // localhost:8000/profileimages/newzealand.jpg
     res.json(response);
   } catch (error) {
     console.log(error);

@@ -41,7 +41,7 @@ export default function ChooseShipping(){
     }
 
     const fetchLocations=()=>{
-        Axios.get(`http://localhost:3300/api/warehouse/warehouse-list`)
+        Axios.get(`${process.env.REACT_APP_API_BASE_URL}/warehouse/warehouse-list`)
         .then(res=>{
             setAllWH(res.data)
             setHomeId(location.state)
@@ -59,7 +59,7 @@ export default function ChooseShipping(){
     }
 
     const homeCoordinate=()=>{
-        Axios.get(`http://localhost:3300/api/address/address-city-id/${homeId}`)
+        Axios.get(`${process.env.REACT_APP_API_BASE_URL}/address/address-city-id/${homeId}`)
         .then(res=>{
             setHomeLat(res.data.latitude)
             setHomeLon(res.data.longitude)
@@ -73,6 +73,8 @@ export default function ChooseShipping(){
                 allWH[x].totalDistance=mathDist[x]
         }
         allWH.sort(compareDist) //now allWh are sorted from nearest to furthest
+        console.log("ini wh terdekat", allWH)
+        console.log("ini home terdekat", homeId)
     }
 
     const ongkirCount=()=>{
@@ -90,7 +92,7 @@ export default function ChooseShipping(){
             destination: homeId,
             courier: courierCode,
         }
-        Axios.post(`http://localhost:3300/api/address/ongkir-type`,req)
+        Axios.post(`${process.env.REACT_APP_API_BASE_URL}/address/ongkir-type`,req)
         .then(res=>{
             const rajaongkirData = JSON.parse(res.data)
             const rajaongkirCost = rajaongkirData.rajaongkir.results[0]
@@ -101,7 +103,7 @@ export default function ChooseShipping(){
 
   // mengambil data order
   const getOrder = () => {
-    Axios.get(`http://localhost:3300/api/order/get-order/${user?.customer_uid}`)
+    Axios.get(`${process.env.REACT_APP_API_BASE_URL}/order/get-order/${user?.customer_uid}`)
     .then((result) => {
       setOrderState(result.data);
       console.log("ini get order", result.data)
@@ -149,8 +151,9 @@ export default function ChooseShipping(){
         const data = {
             shipping_courier: courier,
             shipping_price: costSelect,
+            warehouse_id: allWH[0].id
           }
-          Axios.put(`http://localhost:3300/api/order/edit-shipping/${user.customer_uid}`, data)
+          Axios.put(`${process.env.REACT_APP_API_BASE_URL}/order/edit-shipping/${user.customer_uid}`, data)
           .then(() => {
             history.push(`/checkout/${user.customer_uid}/${orderState.id}`)
           })
